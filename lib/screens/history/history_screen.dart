@@ -493,6 +493,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   late final TextEditingController _chipsCtrl;
   late final TextEditingController _chipValCtrl;
   late final TextEditingController _venueFeeCtrl;
+  late final TextEditingController _gameFeeCtrl;
+  late final TextEditingController _topPrizeCtrl;
   late final TextEditingController _noteCtrl;
 
   @override
@@ -507,6 +509,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     _chipsCtrl    = TextEditingController(text: '${s.chips}');
     _chipValCtrl  = TextEditingController(text: '${s.chipVal}');
     _venueFeeCtrl = TextEditingController(text: '${s.venueFee}');
+    _gameFeeCtrl  = TextEditingController(text: s.gameFee  > 0 ? '${s.gameFee}'  : '');
+    _topPrizeCtrl = TextEditingController(text: s.topPrize > 0 ? '${s.topPrize}' : '');
     _noteCtrl     = TextEditingController(text: s.note);
   }
 
@@ -538,7 +542,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   @override
   void dispose() {
     _shopCtrl.dispose(); _balanceCtrl.dispose(); _chipsCtrl.dispose();
-    _chipValCtrl.dispose(); _venueFeeCtrl.dispose(); _noteCtrl.dispose();
+    _chipValCtrl.dispose(); _venueFeeCtrl.dispose();
+    _gameFeeCtrl.dispose(); _topPrizeCtrl.dispose(); _noteCtrl.dispose();
     super.dispose();
   }
 
@@ -548,9 +553,19 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     final chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
     final chipVal  = int.tryParse(_chipValCtrl.text)  ?? 0;
     final venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
-    final net = widget.session.gameType == 'free'
-        ? balance + chipVal
-        : balance + chipVal - venueFee;
+    final gameFee  = int.tryParse(_gameFeeCtrl.text)  ?? widget.session.gameFee;
+    final topPrize = int.tryParse(_topPrizeCtrl.text) ?? widget.session.topPrize;
+    final totalGames = _c1 + _c2 + _c3 + _c4;
+
+    // session_utils.getNet() と整合した計算
+    final int net;
+    if (widget.session.gameType == 'free') {
+      net = balance + chipVal
+          - (totalGames * gameFee)
+          - (_c1 * topPrize);
+    } else {
+      net = balance + chipVal - venueFee;
+    }
 
     final updated = widget.session.copyWith(
       shop:      _shopCtrl.text.trim(),
@@ -560,6 +575,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
       chips:     chips,
       chipVal:   chipVal,
       venueFee:  venueFee,
+      gameFee:   gameFee,
+      topPrize:  topPrize,
       net:       net,
       note:      _noteCtrl.text.trim(),
     );
@@ -708,6 +725,10 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
             _EditRow(label: 'チップ枚数', ctrl: _chipsCtrl, signed: true),
             _EditRow(label: 'チップ収支', ctrl: _chipValCtrl, signed: true),
             _EditRow(label: '場代',     ctrl: _venueFeeCtrl),
+            if (widget.session.gameType == 'free') ...[
+              _EditRow(label: 'ゲーム代/局', ctrl: _gameFeeCtrl,  keyboard: TextInputType.number),
+              _EditRow(label: 'トップ賞/回', ctrl: _topPrizeCtrl, keyboard: TextInputType.number),
+            ],
             _EditRow(label: 'メモ',     ctrl: _noteCtrl),
             const SizedBox(height: 16),
             Row(
@@ -740,16 +761,26 @@ class _EditRow extends StatelessWidget {
   final String label;
   final TextEditingController ctrl;
   final bool signed;
-  const _EditRow({required this.label, required this.ctrl, this.signed = false});
+  final TextInputType? keyboard;
+  const _EditRow({
+    required this.label,
+    required this.ctrl,
+    this.signed = false,
+    this.keyboard,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final keyboardType = keyboard ??
+        (signed
+            ? const TextInputType.numberWithOptions(signed: true)
+            : TextInputType.text);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           SizedBox(
-            width: 80,
+            width: 90,
             child: Text(label,
                 style: TextStyle(
                     color: AppColors.appInk.withAlpha(160), fontSize: 13)),
@@ -757,9 +788,7 @@ class _EditRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: ctrl,
-              keyboardType: signed
-                  ? const TextInputType.numberWithOptions(signed: true)
-                  : TextInputType.text,
+              keyboardType: keyboardType,
               decoration: const InputDecoration(
                 isDense: true,
                 border: UnderlineInputBorder(),
