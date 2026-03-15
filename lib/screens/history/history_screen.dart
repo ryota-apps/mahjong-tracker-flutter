@@ -281,7 +281,7 @@ class _SessionTile extends ConsumerWidget {
               label: '編集',
             ),
             SlidableAction(
-              onPressed: (_) => _confirmDelete(context, ref),
+              onPressed: (_) => _delete(context, ref),
               backgroundColor: AppColors.appRed,
               foregroundColor: Colors.white,
               icon: Icons.delete,
@@ -308,27 +308,19 @@ class _SessionTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title:   const Text('削除しますか？'),
-        content: Text('${session.shop}（${DateFormat('M/d').format(session.date)}）を削除します。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除', style: TextStyle(color: AppColors.appRed)),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && context.mounted) {
-      ref.read(sessionProvider.notifier).deleteSession(session.id);
-    }
+  void _delete(BuildContext context, WidgetRef ref) {
+    final deleted = session;
+    ref.read(sessionProvider.notifier).deleteSession(session.id);
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: const Text('セッションを削除しました'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: '元に戻す',
+          onPressed: () => ref.read(sessionProvider.notifier).addSession(deleted),
+        ),
+      ));
   }
 }
 
@@ -515,6 +507,31 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     _noteCtrl     = TextEditingController(text: s.note);
   }
 
+  static const _placeNames  = ['1着', '2着', '3着', '4着'];
+  static const _placeColors = [
+    AppColors.place1, AppColors.place2, AppColors.place3, AppColors.place4,
+  ];
+
+  int _countOf(int i) {
+    switch (i) {
+      case 0: return _c1;
+      case 1: return _c2;
+      case 2: return _c3;
+      default: return _c4;
+    }
+  }
+
+  void _setCount(int i, int v) {
+    setState(() {
+      switch (i) {
+        case 0: _c1 = v.clamp(0, 999);
+        case 1: _c2 = v.clamp(0, 999);
+        case 2: _c3 = v.clamp(0, 999);
+        case 3: _c4 = v.clamp(0, 999);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _shopCtrl.dispose(); _balanceCtrl.dispose(); _chipsCtrl.dispose();
@@ -571,6 +588,66 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
             const Text('セッション編集',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
+            // ── 着順カウント ────────────────────────────────────────────
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('着順カウント',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.appInk.withAlpha(128),
+                      letterSpacing: 0.4)),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: List.generate(widget.session.players, (i) {
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                              width: 7, height: 7,
+                              decoration: BoxDecoration(
+                                  color: _placeColors[i],
+                                  shape: BoxShape.circle)),
+                          const SizedBox(width: 3),
+                          Text(_placeNames[i],
+                              style: const TextStyle(fontSize: 11)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _SmallCountBtn(
+                            icon:  Icons.remove,
+                            onTap: () => _setCount(i, _countOf(i) - 1),
+                          ),
+                          SizedBox(
+                            width: 32,
+                            child: Text(
+                              '${_countOf(i)}',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          _SmallCountBtn(
+                            icon:  Icons.add,
+                            onTap: () => _setCount(i, _countOf(i) + 1),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 12),
+            Divider(color: AppColors.appInk.withAlpha(20), height: 1),
+            const SizedBox(height: 4),
+            // ── テキスト入力 ─────────────────────────────────────────────
             _EditRow(label: '店舗名',   ctrl: _shopCtrl),
             _EditRow(label: '現金収支', ctrl: _balanceCtrl, signed: true),
             _EditRow(label: 'チップ枚数', ctrl: _chipsCtrl, signed: true),
@@ -660,20 +737,59 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends ConsumerWidget {
   const _EmptyState();
+
   @override
-  Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.list_alt,
-                size: 56, color: AppColors.appInk.withAlpha(60)),
-            const SizedBox(height: 12),
-            Text('記録がありません',
-                style: TextStyle(
-                    color: AppColors.appInk.withAlpha(100), fontSize: 16)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(filterProvider);
+    final isFiltered = f.period != PeriodFilter.all ||
+        f.players != PlayersFilter.all ||
+        f.gameType != GameTypeFilter.all ||
+        f.shopId != null ||
+        f.rate != null;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.list_alt, size: 56, color: AppColors.appInk.withAlpha(60)),
+          const SizedBox(height: 12),
+          Text(
+            isFiltered ? 'フィルターに一致する記録がありません' : '記録がありません',
+            style: TextStyle(color: AppColors.appInk.withAlpha(100), fontSize: 16),
+          ),
+          if (isFiltered) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () => ref.read(filterProvider.notifier).reset(),
+              child: const Text('フィルターをリセット'),
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallCountBtn extends StatelessWidget {
+  final IconData     icon;
+  final VoidCallback onTap;
+  const _SmallCountBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width:  30,
+        height: 30,
+        decoration: BoxDecoration(
+          color:        AppColors.appInk.withAlpha(15),
+          borderRadius: BorderRadius.circular(6),
         ),
-      );
+        child: Icon(icon, size: 16, color: AppColors.appInk),
+      ),
+    );
+  }
 }

@@ -18,9 +18,9 @@ import '../../providers/session_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../widgets/toast_widget.dart';
 
-const _kICloudEnabled  = 'icloud_enabled';
-const _kICloudLastSync = 'icloud_last_sync';
-const _iCloudContainerId = 'iCloud.jp.example.mahjongTracker'; // バンドルIDに合わせて変更
+const _kICloudEnabled    = 'icloud_enabled';
+const _kICloudLastSync   = 'icloud_last_sync';
+const _iCloudContainerId = 'iCloud.com.ryota.mahjongtracker';
 
 class DataScreen extends ConsumerStatefulWidget {
   const DataScreen({super.key});
@@ -37,21 +37,30 @@ class _DataScreenState extends ConsumerState<DataScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPrefs();
+    _loadPrefsAndAutoSync();
   }
 
-  Future<void> _loadPrefs() async {
+  Future<void> _loadPrefsAndAutoSync() async {
     final p = await SharedPreferences.getInstance();
+    final enabled = p.getBool(_kICloudEnabled) ?? false;
     setState(() {
-      _icloudEnabled = p.getBool(_kICloudEnabled) ?? false;
+      _icloudEnabled = enabled;
       _lastSyncStr   = p.getString(_kICloudLastSync);
     });
+    // 起動時：ONなら自動同期
+    if (enabled) {
+      await _icloudBackup();
+    }
   }
 
   Future<void> _toggleICloud(bool enabled) async {
     final p = await SharedPreferences.getInstance();
     await p.setBool(_kICloudEnabled, enabled);
     setState(() => _icloudEnabled = enabled);
+    // トグルONにした瞬間に自動同期
+    if (enabled) {
+      await _icloudBackup();
+    }
   }
 
   // ── JSON エクスポート ──────────────────────────────────────────────────────
@@ -245,31 +254,22 @@ class _DataScreenState extends ConsumerState<DataScreen> {
                   activeThumbColor: AppColors.appTeal,
                 ),
               ),
-              if (_lastSyncStr != null)
-                _TileRow(
-                  label: '最終同期',
-                  trailing: Text(_lastSyncStr!,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color:    AppColors.appInk.withAlpha(160))),
-                ),
-              if (_icloudEnabled)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-                  child: OutlinedButton.icon(
-                    onPressed: _syncing ? null : _icloudBackup,
-                    icon: _syncing
-                        ? const SizedBox(
-                            width: 14, height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.cloud_upload_outlined),
-                    label: const Text('今すぐバックアップ'),
-                  ),
-                ),
+              _TileRow(
+                label: '最終同期',
+                trailing: _syncing
+                    ? const SizedBox(
+                        width: 14, height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
+                        _lastSyncStr ?? '未同期',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.appInk.withAlpha(160))),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 4, left: 2),
                 child: Text(
-                  '変更は次回起動時に反映されます',
+                  'ONにした瞬間・アプリ起動時に自動でバックアップします',
                   style: TextStyle(
                       fontSize: 11, color: AppColors.appInk.withAlpha(120)),
                 ),

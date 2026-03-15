@@ -161,6 +161,48 @@ class _CumulativeChart extends StatelessWidget {
                 ),
               ),
             ],
+            lineTouchData: LineTouchData(
+              handleBuiltInTouches: true,
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipColor: (_) => AppColors.appInk.withAlpha(217),
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((spot) {
+                    final idx = spot.x.toInt();
+                    if (idx < 0 || idx >= disp.length) return null;
+                    final s   = disp[idx];
+                    final net = getNet(s, withFees);
+                    return LineTooltipItem(
+                      '${DateFormat('M/d').format(s.date)} ${s.shop}\n',
+                      const TextStyle(color: Colors.white, fontSize: 11),
+                      children: [
+                        TextSpan(
+                          text: '${signedStr(net)}円',
+                          style: TextStyle(
+                            color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList();
+                },
+              ),
+              touchCallback: (event, response) {
+                if (event is! FlTapUpEvent) return;
+                final spot = response?.lineBarSpots?.firstOrNull;
+                if (spot == null) return;
+                final idx = spot.x.toInt();
+                if (idx < 0 || idx >= disp.length) return;
+                showModalBottomSheet(
+                  context: context,
+                  builder: (_) => _SessionDetailSheet(
+                    session: disp[idx],
+                    net:     getNet(disp[idx], withFees),
+                  ),
+                );
+              },
+            ),
             gridData: FlGridData(
               show: true,
               drawHorizontalLine: true,
@@ -644,18 +686,132 @@ class _StatPill extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends ConsumerWidget {
   const _EmptyState();
+
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(filterProvider);
+    final isFiltered = f.period != PeriodFilter.all ||
+        f.players != PlayersFilter.all ||
+        f.gameType != GameTypeFilter.all ||
+        f.shopId != null ||
+        f.rate != null;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bar_chart, size: 56, color: AppColors.appInk.withAlpha(60)),
+          const SizedBox(height: 12),
+          Text(
+            isFiltered ? 'フィルターに一致する記録がありません' : 'データがありません',
+            style: TextStyle(color: AppColors.appInk.withAlpha(100), fontSize: 16),
+          ),
+          if (isFiltered) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () => ref.read(filterProvider.notifier).reset(),
+              child: const Text('フィルターをリセット'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── セッション詳細 BottomSheet ──────────────────────────────────────────────
+class _SessionDetailSheet extends StatelessWidget {
+  final Session session;
+  final int     net;
+  const _SessionDetailSheet({required this.session, required this.net});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFree = session.gameType == 'free';
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.bar_chart, size: 56, color: AppColors.appInk.withAlpha(60)),
-            const SizedBox(height: 12),
-            Text('データがありません',
-                style: TextStyle(color: AppColors.appInk.withAlpha(100), fontSize: 16)),
+            Text(
+              DateFormat('yyyy年M月d日 (E)', 'ja').format(session.date),
+              style: TextStyle(fontSize: 13, color: AppColors.appInk.withAlpha(160)),
+            ),
+            const SizedBox(height: 4),
+            Text(session.shop,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(
+              '${session.players}人  ${session.format}  ${isFree ? "フリー" : "セット"}',
+              style: TextStyle(fontSize: 12, color: AppColors.appInk.withAlpha(128)),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Column(
+                children: [
+                  Text('純収支',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.appInk.withAlpha(128))),
+                  Text(
+                    '${signedStr(net)}円',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _RankPill(rank: 1, count: session.count1),
+                _RankPill(rank: 2, count: session.count2),
+                _RankPill(rank: 3, count: session.count3),
+                if (session.players == 4)
+                  _RankPill(rank: 4, count: session.count4),
+              ],
+            ),
+            if (session.note.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(session.note,
+                  style: TextStyle(
+                      fontSize: 13, color: AppColors.appInk.withAlpha(160))),
+            ],
           ],
         ),
-      );
+      ),
+    );
+  }
+}
+
+class _RankPill extends StatelessWidget {
+  final int rank;
+  final int count;
+  const _RankPill({required this.rank, required this.count});
+
+  static const _colors = [
+    AppColors.place1, AppColors.place2, AppColors.place3, AppColors.place4,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[rank - 1];
+    return Column(
+      children: [
+        Text('$rank着',
+            style: TextStyle(fontSize: 11, color: AppColors.appInk.withAlpha(128))),
+        const SizedBox(height: 2),
+        Text('$count回',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
+  }
 }

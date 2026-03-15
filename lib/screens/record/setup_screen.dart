@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -22,6 +24,7 @@ const _kFormat     = 'setup_format';
 const _kChipUnit   = 'setup_chipUnit';
 const _kGameFee    = 'setup_gameFee';
 const _kTopPrize   = 'setup_topPrize';
+const _kDraft      = 'session_draft';
 
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
@@ -104,8 +107,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     });
   }
 
-  // ── セッション開始 ─────────────────────────────────────────────────────────
-  void _startSession() {
+  // ── セッション開始（ドラフトチェック付き）──────────────────────────────────
+  Future<void> _startSession() async {
     _shopName = _shopCtrl.text.trim();
     if (_shopName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +116,37 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       );
       return;
     }
+
+    final p = await SharedPreferences.getInstance();
+    final draftStr = p.getString(_kDraft);
+    Map<String, dynamic>? draft;
+
+    if (draftStr != null && mounted) {
+      final resume = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title:   const Text('前回の入力が残っています'),
+          content: const Text('前回の入力の続きから再開しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('新しく始める'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('再開する'),
+            ),
+          ],
+        ),
+      );
+      if (resume == true) {
+        draft = jsonDecode(draftStr) as Map<String, dynamic>;
+      } else {
+        await p.remove(_kDraft);
+      }
+    }
+
+    if (!mounted) return;
     _saveLast();
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SessionInputScreen(
@@ -125,6 +159,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         chipUnit:  _chipUnit,
         gameFee:   _gameFee,
         topPrize:  _topPrize,
+        draft:     draft,
       ),
     ));
   }
@@ -294,7 +329,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             OutlinedButton(
               onPressed: () async {
                 await _restoreLast();
-                _startSession();
+                await _startSession();
               },
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.appTeal, width: 1.5),

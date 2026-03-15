@@ -1,15 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
 import '../../models/session.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
 import '../../widgets/toast_widget.dart';
+
+const _kDraft = 'session_draft';
 
 class SessionInputScreen extends ConsumerStatefulWidget {
   final DateTime date;
@@ -21,6 +25,7 @@ class SessionInputScreen extends ConsumerStatefulWidget {
   final int      chipUnit;
   final int      gameFee;
   final int      topPrize;
+  final Map<String, dynamic>? draft;
 
   const SessionInputScreen({
     super.key,
@@ -33,6 +38,7 @@ class SessionInputScreen extends ConsumerStatefulWidget {
     required this.chipUnit,
     required this.gameFee,
     required this.topPrize,
+    this.draft,
   });
 
   @override
@@ -64,12 +70,34 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   @override
   void initState() {
     super.initState();
-    _chipUnit     = widget.chipUnit;
-    _balanceCtrl  = TextEditingController(text: '0');
-    _chipsCtrl    = TextEditingController(text: '0');
-    _chipUnitCtrl = TextEditingController(text: '$_chipUnit');
-    _venueFeeCtrl = TextEditingController(text: '0');
-    _noteCtrl     = TextEditingController();
+    _chipUnit = widget.chipUnit;
+
+    if (widget.draft != null) {
+      final d = widget.draft!;
+      final counts = (d['counts'] as Map<String, dynamic>?) ?? {};
+      _c1 = (counts['1'] as int?) ?? 0;
+      _c2 = (counts['2'] as int?) ?? 0;
+      _c3 = (counts['3'] as int?) ?? 0;
+      _c4 = (counts['4'] as int?) ?? 0;
+      _balanceCtrl  = TextEditingController(text: (d['balance']       as String?) ?? '0');
+      _chipsCtrl    = TextEditingController(text: (d['chips']         as String?) ?? '0');
+      _chipUnitCtrl = TextEditingController(text: (d['chipUnitManual'] as String?) ?? '$_chipUnit');
+      _venueFeeCtrl = TextEditingController(text: (d['venueFee']      as String?) ?? '0');
+      _noteCtrl     = TextEditingController(text: (d['note']          as String?) ?? '');
+    } else {
+      _balanceCtrl  = TextEditingController(text: '0');
+      _chipsCtrl    = TextEditingController(text: '0');
+      _chipUnitCtrl = TextEditingController(text: '$_chipUnit');
+      _venueFeeCtrl = TextEditingController(text: '0');
+      _noteCtrl     = TextEditingController();
+    }
+
+    // 初期値を計算（initState内なのでsetStateなしで直接代入）
+    _balance  = int.tryParse(_balanceCtrl.text)  ?? 0;
+    _chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
+    _chipUnit = int.tryParse(_chipUnitCtrl.text) ?? _chipUnit;
+    _venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
+    _chipVal  = _chips * _chipUnit;
   }
 
   @override
@@ -83,6 +111,24 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     super.dispose();
   }
 
+  // ── ドラフト保存 ──────────────────────────────────────────────────────────
+  Future<void> _saveDraft() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kDraft, jsonEncode({
+      'counts': {'1': _c1, '2': _c2, '3': _c3, '4': _c4},
+      'balance':       _balanceCtrl.text,
+      'chips':         _chipsCtrl.text,
+      'chipUnitManual': _chipUnitCtrl.text,
+      'venueFee':      _venueFeeCtrl.text,
+      'note':          _noteCtrl.text,
+    }));
+  }
+
+  Future<void> _clearDraft() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kDraft);
+  }
+
   // ── 着順カウント操作 ──────────────────────────────────────────────────────
   void _updateCount(int place, int delta) {
     HapticFeedback.lightImpact();
@@ -94,6 +140,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
         case 4: _c4 = (_c4 + delta).clamp(0, 999);
       }
     });
+    _saveDraft();
   }
 
   void _startLongPress(int place, int delta) {
@@ -115,6 +162,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     _venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
     _chipVal  = _chips * _chipUnit;
     setState(() {});
+    _saveDraft();
   }
 
   int get _net {
@@ -125,7 +173,6 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   // ── 保存 ─────────────────────────────────────────────────────────────────
   Future<void> _save() async {
     _recalc();
-    // ゲーム数0チェック
     final totalGames = _c1 + _c2 + _c3 + (widget.players == 4 ? _c4 : 0);
     if (totalGames == 0) {
       final ok = await showDialog<bool>(
@@ -170,6 +217,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     );
 
     await ref.read(sessionProvider.notifier).addSession(session);
+    await _clearDraft();
 
     if (!mounted) return;
     final sessions = ref.read(sessionProvider);
@@ -197,12 +245,14 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
         ],
       ),
     );
-    return result ?? false;
+    final confirmed = result ?? false;
+    if (confirmed) await _clearDraft();
+    return confirmed;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isFree = widget.gameType == 'free';
+    final isFree   = widget.gameType == 'free';
     final showChip = _chipUnit > 0 || !isFree;
 
     return PopScope(
@@ -239,41 +289,71 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── 着順カウント ──────────────────────────────────────────
-              _buildCountGrid(),
-              const SizedBox(height: 16),
-
-              // ── 収支入力 ──────────────────────────────────────────────
-              _buildBalanceSection(isFree: isFree, showChip: showChip),
-              const SizedBox(height: 16),
-
-              // ── 純収支プレビュー ──────────────────────────────────────
-              _buildNetPreview(),
-              const SizedBox(height: 16),
-
-              // ── メモ ──────────────────────────────────────────────────
-              _buildMemo(),
-              const SizedBox(height: 24),
-
-              // ── 保存ボタン ────────────────────────────────────────────
-              FilledButton(
-                onPressed: _save,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.appTeal,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── 純収支 Sticky バー ───────────────────────────────────────
+            _buildStickyNetBar(),
+            // ── スクロールコンテンツ ──────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildCountGrid(),
+                    const SizedBox(height: 16),
+                    _buildBalanceSection(isFree: isFree, showChip: showChip),
+                    const SizedBox(height: 16),
+                    _buildMemo(),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: _save,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.appTeal,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('保存する',
+                          style: TextStyle(fontSize: 16, color: Colors.white)),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
-                child: const Text('保存する',
-                    style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
-              const SizedBox(height: 32),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── 純収支 Sticky バー ────────────────────────────────────────────────────
+  Widget _buildStickyNetBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.appCream,
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.appInk.withAlpha(25),
+            width: 1,
           ),
         ),
+      ),
+      child: Column(
+        children: [
+          Text('純収支',
+              style: TextStyle(
+                  fontSize: 11, color: AppColors.appInk.withAlpha(128))),
+          Text(
+            '${signedStr(_net)}円',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: _net >= 0 ? AppColors.appTeal : AppColors.appRed,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -289,13 +369,13 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       mainAxisSpacing:  10,
       childAspectRatio: 1.3,
       children: places.map((p) => _CountCard(
-        place:          p,
-        count:          _countOf(p),
-        onDecrement:    () => _updateCount(p, -1),
-        onIncrement:    () => _updateCount(p, 1),
+        place:           p,
+        count:           _countOf(p),
+        onDecrement:     () => _updateCount(p, -1),
+        onIncrement:     () => _updateCount(p, 1),
         onLongDecrement: () => _startLongPress(p, -1),
         onLongIncrement: () => _startLongPress(p, 1),
-        onLongPressEnd: _stopLongPress,
+        onLongPressEnd:  _stopLongPress,
       )).toList(),
     );
   }
@@ -388,45 +468,6 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   Widget _divider() => Divider(
       color: AppColors.appInk.withAlpha(25), height: 1, thickness: 1);
 
-  // ── 純収支プレビュー ──────────────────────────────────────────────────────
-  Widget _buildNetPreview() {
-    return Container(
-      decoration: BoxDecoration(
-        color:        AppColors.appCream,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-              color: AppColors.appInk.withAlpha(15),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Text('純収支プレビュー',
-              style: TextStyle(
-                  color:    AppColors.appInk.withAlpha(160),
-                  fontSize: 14)),
-          const Spacer(),
-          Text(
-            signedStr(_net),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: _net >= 0 ? AppColors.appTeal : AppColors.appRed,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text('円',
-              style: TextStyle(
-                  color:    AppColors.appInk.withAlpha(160),
-                  fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
   // ── メモ ──────────────────────────────────────────────────────────────────
   Widget _buildMemo() {
     return Container(
@@ -450,6 +491,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
           isDense:  true,
           hintStyle: TextStyle(color: AppColors.appInk.withAlpha(100)),
         ),
+        onChanged: (_) => _saveDraft(),
       ),
     );
   }
@@ -521,17 +563,17 @@ class _CountCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _PressBtn(
-                icon:         Icons.remove,
-                onTap:        onDecrement,
-                onLongPress:  onLongDecrement,
-                onLongPressEnd: onLongPressEnd,
+                icon:            Icons.remove,
+                onTap:           onDecrement,
+                onLongPress:     onLongDecrement,
+                onLongPressEnd:  onLongPressEnd,
               ),
               const SizedBox(width: 12),
               _PressBtn(
-                icon:         Icons.add,
-                onTap:        onIncrement,
-                onLongPress:  onLongIncrement,
-                onLongPressEnd: onLongPressEnd,
+                icon:            Icons.add,
+                onTap:           onIncrement,
+                onLongPress:     onLongIncrement,
+                onLongPressEnd:  onLongPressEnd,
               ),
             ],
           ),
@@ -541,7 +583,7 @@ class _CountCard extends StatelessWidget {
   }
 }
 
-class _PressBtn extends StatelessWidget {
+class _PressBtn extends StatefulWidget {
   final IconData     icon;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -555,19 +597,36 @@ class _PressBtn extends StatelessWidget {
   });
 
   @override
+  State<_PressBtn> createState() => _PressBtnState();
+}
+
+class _PressBtnState extends State<_PressBtn> {
+  bool _pressing = false;
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap:           onTap,
-      onLongPress:     onLongPress,
-      onLongPressEnd:  (_) => onLongPressEnd(),
-      child: Container(
-        width:  32,
-        height: 32,
-        decoration: BoxDecoration(
-          color:        AppColors.appInk.withAlpha(15),
-          borderRadius: BorderRadius.circular(6),
+      onTap: widget.onTap,
+      onLongPress: () {
+        setState(() => _pressing = true);
+        widget.onLongPress();
+      },
+      onLongPressEnd: (_) {
+        setState(() => _pressing = false);
+        widget.onLongPressEnd();
+      },
+      child: AnimatedOpacity(
+        opacity:  _pressing ? 0.7 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width:  44,
+          height: 44,
+          decoration: BoxDecoration(
+            color:        AppColors.appInk.withAlpha(15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(widget.icon, size: 20, color: AppColors.appInk),
         ),
-        child: Icon(icon, size: 18, color: AppColors.appInk),
       ),
     );
   }

@@ -105,7 +105,7 @@ class _ShopTile extends ConsumerWidget {
               label: '編集',
             ),
             SlidableAction(
-              onPressed: (_) => _confirmDelete(context, ref),
+              onPressed: (_) => _delete(context, ref),
               backgroundColor: AppColors.appRed,
               foregroundColor: Colors.white,
               icon: Icons.delete,
@@ -116,7 +116,7 @@ class _ShopTile extends ConsumerWidget {
         child: _ShopCard(
           shop:     shop,
           onEdit:   () => _openForm(context),
-          onDelete: () => _confirmDelete(context, ref),
+          onDelete: () => _delete(context, ref),
         ),
       ),
     );
@@ -130,27 +130,19 @@ class _ShopTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title:   const Text('削除しますか？'),
-        content: Text('「${shop.name}」を削除します。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除', style: TextStyle(color: AppColors.appRed)),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && context.mounted) {
-      ref.read(shopProvider.notifier).deleteShop(shop.id);
-    }
+  void _delete(BuildContext context, WidgetRef ref) {
+    final deleted = shop;
+    ref.read(shopProvider.notifier).deleteShop(shop.id);
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text('「${shop.name}」を削除しました'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: '元に戻す',
+          onPressed: () => ref.read(shopProvider.notifier).addShop(deleted),
+        ),
+      ));
   }
 }
 
