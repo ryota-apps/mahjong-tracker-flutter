@@ -176,7 +176,7 @@ class _CumulativeChart extends StatelessWidget {
                       const TextStyle(color: Colors.white, fontSize: 11),
                       children: [
                         TextSpan(
-                          text: '${signedStr(net)}円',
+                          text: signedYen(net),
                           style: TextStyle(
                             color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
                             fontWeight: FontWeight.bold,
@@ -273,14 +273,14 @@ class _SummaryCards extends StatelessWidget {
         spacing: 12,
         runSpacing: 12,
         children: [
-          _StatBox(label: '累計純収支', value: signedStr(total),
+          _StatBox(label: '累計純収支', value: signedCommaStr(total),
               color: total >= 0 ? AppColors.appTeal : AppColors.appRed),
-          _StatBox(label: '平均/セッション', value: signedStr(avg),
+          _StatBox(label: '平均/セッション', value: signedCommaStr(avg),
               color: avg >= 0 ? AppColors.appTeal : AppColors.appRed),
-          _StatBox(label: '最高',  value: signedStr(best),  color: AppColors.appTeal),
-          _StatBox(label: '最低',  value: signedStr(worst), color: AppColors.appRed),
+          _StatBox(label: '最高',  value: signedCommaStr(best),  color: AppColors.appTeal),
+          _StatBox(label: '最低',  value: signedCommaStr(worst), color: AppColors.appRed),
           if (chipTotal != 0)
-            _StatBox(label: '累計チップ', value: signedStr(chipTotal),
+            _StatBox(label: '累計チップ', value: signedCommaStr(chipTotal),
                 color: AppColors.appGold),
           _StatBox(label: 'セッション数', value: '${sessions.length}回',
               color: AppColors.appInk),
@@ -582,12 +582,12 @@ class _ShopStats extends StatelessWidget {
                     _StatPill(label: '$games局'),
                     _StatPill(label: '1着率${p1Rate.toStringAsFixed(0)}%'),
                     _StatPill(
-                      label: signedStr(net),
+                      label: signedCommaStr(net),
                       color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
                     ),
                     if (chip != 0)
                       _StatPill(
-                        label: 'チップ${signedStr(chip)}',
+                        label: 'チップ${signedCommaStr(chip)}',
                         color: AppColors.appGold,
                       ),
                   ],
@@ -757,7 +757,7 @@ class _SessionDetailSheet extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 12, color: AppColors.appInk.withAlpha(128))),
                   Text(
-                    '${signedStr(net)}円',
+                    signedYen(net),
                     style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.bold,

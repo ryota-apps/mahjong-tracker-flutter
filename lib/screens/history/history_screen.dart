@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -398,7 +399,7 @@ class _SessionCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(signedStr(net),
+                  Text(signedCommaStr(net),
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -406,7 +407,7 @@ class _SessionCard extends StatelessWidget {
                   Text('円',
                       style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.appInk.withAlpha(128))),
+                          color: AppColors.appInk.withAlpha(191))),
                 ],
               ),
             ],
@@ -450,7 +451,7 @@ class _SessionCard extends StatelessWidget {
             children: [
               if (session.chipVal != 0)
                 _Badge(
-                  label: 'チップ${signedStr(session.chipVal)}',
+                  label: 'チップ${signedCommaStr(session.chipVal)}',
                   color: AppColors.appGold.withAlpha(30),
                   textColor: AppColors.appGold,
                 ),
@@ -486,7 +487,8 @@ class _EditSheet extends ConsumerStatefulWidget {
 class _EditSheetState extends ConsumerState<_EditSheet> {
   late DateTime _date;
   late final TextEditingController _shopCtrl;
-  late int _c1, _c2, _c3, _c4;
+  late int  _c1, _c2, _c3, _c4;
+  bool      _balanceNeg = false;
   late final TextEditingController _balanceCtrl;
   late final TextEditingController _chipsCtrl;
   late final TextEditingController _chipValCtrl;
@@ -500,7 +502,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     _date    = s.date;
     _shopCtrl     = TextEditingController(text: s.shop);
     _c1 = s.count1; _c2 = s.count2; _c3 = s.count3; _c4 = s.count4;
-    _balanceCtrl  = TextEditingController(text: '${s.balance}');
+    _balanceNeg   = s.balance < 0;
+    _balanceCtrl  = TextEditingController(text: '${s.balance.abs()}');
     _chipsCtrl    = TextEditingController(text: '${s.chips}');
     _chipValCtrl  = TextEditingController(text: '${s.chipVal}');
     _venueFeeCtrl = TextEditingController(text: '${s.venueFee}');
@@ -540,7 +543,8 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   }
 
   Future<void> _save() async {
-    final balance  = int.tryParse(_balanceCtrl.text)  ?? 0;
+    final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
+    final balance  = _balanceNeg ? -rawBalance : rawBalance;
     final chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
     final chipVal  = int.tryParse(_chipValCtrl.text)  ?? 0;
     final venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
@@ -648,8 +652,59 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
             Divider(color: AppColors.appInk.withAlpha(20), height: 1),
             const SizedBox(height: 4),
             // ── テキスト入力 ─────────────────────────────────────────────
-            _EditRow(label: '店舗名',   ctrl: _shopCtrl),
-            _EditRow(label: '現金収支', ctrl: _balanceCtrl, signed: true),
+            _EditRow(label: '店舗名', ctrl: _shopCtrl),
+            // ── 現金収支（+/− トグル）──────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Text('現金収支',
+                        style: TextStyle(
+                            color: AppColors.appInk.withAlpha(191),
+                            fontSize: 13)),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() => _balanceNeg = !_balanceNeg),
+                    child: Container(
+                      width:  36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _balanceNeg
+                            ? AppColors.appRed
+                            : AppColors.appTeal,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _balanceNeg ? '−' : '＋',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller:   _balanceCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border:  UnderlineInputBorder(),
+                        hintText: '0',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             _EditRow(label: 'チップ枚数', ctrl: _chipsCtrl, signed: true),
             _EditRow(label: 'チップ収支', ctrl: _chipValCtrl, signed: true),
             _EditRow(label: '場代',     ctrl: _venueFeeCtrl),

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app.dart';
 import '../../models/shop.dart';
 import '../../providers/shop_provider.dart';
+import '../../utils/session_utils.dart';
 
 const _formatOptions = ['東南戦', '東風戦', 'その他'];
 const _rateOptions   = [0, 1, 2, 3, 5, 10, 20, 30, 50];
@@ -206,11 +207,11 @@ class _ShopCard extends StatelessWidget {
               if (shop.rule > 0)
                 _Badge(label: '${shop.rule}pt',    color: AppColors.appInk.withAlpha(15), textColor: AppColors.appInk),
               if (shop.chipUnit > 0)
-                _Badge(label: 'チップ${shop.chipUnit}円', color: AppColors.appGold.withAlpha(30), textColor: AppColors.appGold),
+                _Badge(label: 'チップ${formatYen(shop.chipUnit)}', color: AppColors.appGold.withAlpha(30), textColor: AppColors.appGold),
               if (shop.gameFee > 0)
-                _Badge(label: 'ゲーム代${shop.gameFee}',  color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
+                _Badge(label: 'ゲーム代${formatYen(shop.gameFee)}',  color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
               if (shop.topPrize > 0)
-                _Badge(label: 'トップ賞${shop.topPrize}', color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
+                _Badge(label: 'トップ賞${formatYen(shop.topPrize)}', color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
               if (shop.chipNote.isNotEmpty)
                 _Badge(label: shop.chipNote, color: AppColors.appInk.withAlpha(10), textColor: AppColors.appInk.withAlpha(180)),
             ],

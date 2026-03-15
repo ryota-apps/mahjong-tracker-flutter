@@ -47,6 +47,7 @@ class SessionInputScreen extends ConsumerStatefulWidget {
 
 class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   late int _chipUnit;
+  bool     _balanceNeg = false;
 
   // ── 着順カウント ──────────────────────────────────────────────────────────
   int _c1 = 0, _c2 = 0, _c3 = 0, _c4 = 0;
@@ -73,27 +74,29 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     _chipUnit = widget.chipUnit;
 
     if (widget.draft != null) {
-      final d = widget.draft!;
+      final d      = widget.draft!;
       final counts = (d['counts'] as Map<String, dynamic>?) ?? {};
-      _c1 = (counts['1'] as int?) ?? 0;
-      _c2 = (counts['2'] as int?) ?? 0;
-      _c3 = (counts['3'] as int?) ?? 0;
-      _c4 = (counts['4'] as int?) ?? 0;
-      _balanceCtrl  = TextEditingController(text: (d['balance']       as String?) ?? '0');
-      _chipsCtrl    = TextEditingController(text: (d['chips']         as String?) ?? '0');
+      _c1          = (counts['1'] as int?) ?? 0;
+      _c2          = (counts['2'] as int?) ?? 0;
+      _c3          = (counts['3'] as int?) ?? 0;
+      _c4          = (counts['4'] as int?) ?? 0;
+      _balanceNeg   = (d['balanceNeg'] as bool?) ?? false;
+      _balanceCtrl  = TextEditingController(text: (d['balance']        as String?) ?? '');
+      _chipsCtrl    = TextEditingController(text: (d['chips']          as String?) ?? '');
       _chipUnitCtrl = TextEditingController(text: (d['chipUnitManual'] as String?) ?? '$_chipUnit');
-      _venueFeeCtrl = TextEditingController(text: (d['venueFee']      as String?) ?? '0');
-      _noteCtrl     = TextEditingController(text: (d['note']          as String?) ?? '');
+      _venueFeeCtrl = TextEditingController(text: (d['venueFee']       as String?) ?? '');
+      _noteCtrl     = TextEditingController(text: (d['note']           as String?) ?? '');
     } else {
-      _balanceCtrl  = TextEditingController(text: '0');
-      _chipsCtrl    = TextEditingController(text: '0');
+      _balanceCtrl  = TextEditingController();
+      _chipsCtrl    = TextEditingController();
       _chipUnitCtrl = TextEditingController(text: '$_chipUnit');
-      _venueFeeCtrl = TextEditingController(text: '0');
+      _venueFeeCtrl = TextEditingController();
       _noteCtrl     = TextEditingController();
     }
 
-    // 初期値を計算（initState内なのでsetStateなしで直接代入）
-    _balance  = int.tryParse(_balanceCtrl.text)  ?? 0;
+    // 初期値を計算（setState不使用）
+    final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
+    _balance  = _balanceNeg ? -rawBalance : rawBalance;
     _chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
     _chipUnit = int.tryParse(_chipUnitCtrl.text) ?? _chipUnit;
     _venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
@@ -115,8 +118,9 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   Future<void> _saveDraft() async {
     final p = await SharedPreferences.getInstance();
     await p.setString(_kDraft, jsonEncode({
-      'counts': {'1': _c1, '2': _c2, '3': _c3, '4': _c4},
+      'counts':        {'1': _c1, '2': _c2, '3': _c3, '4': _c4},
       'balance':       _balanceCtrl.text,
+      'balanceNeg':    _balanceNeg,
       'chips':         _chipsCtrl.text,
       'chipUnitManual': _chipUnitCtrl.text,
       'venueFee':      _venueFeeCtrl.text,
@@ -156,7 +160,8 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
 
   // ── 収支計算 ──────────────────────────────────────────────────────────────
   void _recalc() {
-    _balance  = int.tryParse(_balanceCtrl.text)  ?? 0;
+    final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
+    _balance  = _balanceNeg ? -rawBalance : rawBalance;
     _chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
     _chipUnit = int.tryParse(_chipUnitCtrl.text) ?? 0;
     _venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
@@ -195,35 +200,35 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       if (ok != true) return;
     }
     final session = Session(
-      shop:      widget.shopName,
-      date:      widget.date,
-      players:   widget.players,
-      format:    widget.format,
-      rule:      widget.rule,
-      gameType:  widget.gameType,
-      count1:    _c1,
-      count2:    _c2,
-      count3:    _c3,
-      count4:    widget.players == 4 ? _c4 : 0,
-      balance:   _balance,
-      chips:     _chips,
-      chipUnit:  _chipUnit,
-      chipVal:   _chipVal,
-      venueFee:  _venueFee,
-      net:       _net,
-      gameFee:   widget.gameFee,
-      topPrize:  widget.topPrize,
-      note:      _noteCtrl.text.trim(),
+      shop:     widget.shopName,
+      date:     widget.date,
+      players:  widget.players,
+      format:   widget.format,
+      rule:     widget.rule,
+      gameType: widget.gameType,
+      count1:   _c1,
+      count2:   _c2,
+      count3:   _c3,
+      count4:   widget.players == 4 ? _c4 : 0,
+      balance:  _balance,
+      chips:    _chips,
+      chipUnit: _chipUnit,
+      chipVal:  _chipVal,
+      venueFee: _venueFee,
+      net:      _net,
+      gameFee:  widget.gameFee,
+      topPrize: widget.topPrize,
+      note:     _noteCtrl.text.trim(),
     );
 
     await ref.read(sessionProvider.notifier).addSession(session);
     await _clearDraft();
 
     if (!mounted) return;
-    final sessions = ref.read(sessionProvider);
+    final sessions   = ref.read(sessionProvider);
     final todayTotal = todayNetTotal(sessions);
     Navigator.of(context).pop();
-    showToast(context, '保存しました　今日: ${signedStr(todayTotal)}円');
+    showToast(context, '保存しました　今日: ${signedYen(todayTotal)}');
   }
 
   // ── 破棄確認 ──────────────────────────────────────────────────────────────
@@ -273,7 +278,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text(
                 '${DateFormat('M/d').format(widget.date)}  ${widget.players}人  ${widget.format}  ${isFree ? "フリー" : "セット"}',
-                style: TextStyle(fontSize: 12, color: AppColors.appInk.withAlpha(160)),
+                style: TextStyle(fontSize: 12, color: AppColors.appInk.withAlpha(191)),
               ),
             ],
           ),
@@ -292,9 +297,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── 純収支 Sticky バー ───────────────────────────────────────
             _buildStickyNetBar(),
-            // ── スクロールコンテンツ ──────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -334,19 +337,16 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       decoration: BoxDecoration(
         color: AppColors.appCream,
         border: Border(
-          bottom: BorderSide(
-            color: AppColors.appInk.withAlpha(25),
-            width: 1,
-          ),
+          bottom: BorderSide(color: AppColors.appInk.withAlpha(51), width: 1),
         ),
       ),
       child: Column(
         children: [
           Text('純収支',
               style: TextStyle(
-                  fontSize: 11, color: AppColors.appInk.withAlpha(128))),
+                  fontSize: 11, color: AppColors.appInk.withAlpha(153))),
           Text(
-            '${signedStr(_net)}円',
+            signedYen(_net),
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -405,41 +405,45 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _InputRow(
-            label: isFree ? '現金収支' : '点棒収支',
-            ctrl:  _balanceCtrl,
-            signed: true,
+          _BalanceRow(
+            label:        isFree ? '現金収支' : '点棒収支',
+            ctrl:         _balanceCtrl,
+            isNegative:   _balanceNeg,
+            onToggleSign: () {
+              setState(() => _balanceNeg = !_balanceNeg);
+              _recalc();
+            },
             onChanged: (_) => _recalc(),
           ),
           if (showChip) ...[
             _divider(),
             _InputRow(
-              label: 'チップ枚数',
-              ctrl:  _chipsCtrl,
-              signed: true,
+              label:     'チップ枚数',
+              ctrl:      _chipsCtrl,
+              signed:    true,
               onChanged: (_) => _recalc(),
             ),
           ],
           if (!isFree) ...[
             _divider(),
             _InputRow(
-              label: 'チップ単価',
-              ctrl:  _chipUnitCtrl,
-              signed: false,
+              label:     'チップ単価',
+              ctrl:      _chipUnitCtrl,
+              signed:    false,
               onChanged: (_) => _recalc(),
             ),
           ],
           if (showChip) ...[
             _divider(),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
                 children: [
                   Text('チップ収支',
                       style: TextStyle(
-                          color: AppColors.appInk.withAlpha(160), fontSize: 14)),
+                          color: AppColors.appInk.withAlpha(204), fontSize: 14)),
                   const Spacer(),
-                  Text(signedStr(_chipVal),
+                  Text(signedCommaStr(_chipVal),
                       style: TextStyle(
                         color: _chipVal >= 0
                             ? AppColors.appTeal
@@ -454,9 +458,9 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
           if (!isFree) ...[
             _divider(),
             _InputRow(
-              label: '場代',
-              ctrl:  _venueFeeCtrl,
-              signed: false,
+              label:     '場代',
+              ctrl:      _venueFeeCtrl,
+              signed:    false,
               onChanged: (_) => _recalc(),
             ),
           ],
@@ -466,7 +470,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   }
 
   Widget _divider() => Divider(
-      color: AppColors.appInk.withAlpha(25), height: 1, thickness: 1);
+      color: AppColors.appInk.withAlpha(51), height: 1, thickness: 1);
 
   // ── メモ ──────────────────────────────────────────────────────────────────
   Widget _buildMemo() {
@@ -632,7 +636,92 @@ class _PressBtnState extends State<_PressBtn> {
   }
 }
 
-// ── テキスト入力行 ──────────────────────────────────────────────────────────
+// ── +/− 符号トグル付き入力行 ─────────────────────────────────────────────────
+class _BalanceRow extends StatelessWidget {
+  final String                label;
+  final TextEditingController ctrl;
+  final bool                  isNegative;
+  final VoidCallback          onToggleSign;
+  final ValueChanged<String>  onChanged;
+
+  const _BalanceRow({
+    required this.label,
+    required this.ctrl,
+    required this.isNegative,
+    required this.onToggleSign,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Text(label,
+              style: TextStyle(
+                  color: AppColors.appInk.withAlpha(204), fontSize: 14)),
+          const Spacer(),
+          // +/− トグルボタン
+          GestureDetector(
+            onTap: onToggleSign,
+            child: Container(
+              width:  44,
+              height: 44,
+              decoration: BoxDecoration(
+                color:        isNegative ? AppColors.appRed : AppColors.appTeal,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  isNegative ? '−' : '＋',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 120,
+            child: TextField(
+              controller:   ctrl,
+              textAlign:    TextAlign.right,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                hintText:         '0',
+                hintStyle: TextStyle(color: AppColors.appInk.withAlpha(77)),
+                contentPadding:   const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 14),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                      color: AppColors.appInk.withAlpha(77), width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                      color: AppColors.appInk, width: 2),
+                ),
+                filled:    true,
+                fillColor: AppColors.appPaper,
+              ),
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w500),
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 通常テキスト入力行 ──────────────────────────────────────────────────────
 class _InputRow extends StatelessWidget {
   final String                  label;
   final TextEditingController   ctrl;
@@ -649,27 +738,42 @@ class _InputRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Text(label,
               style: TextStyle(
-                  color: AppColors.appInk.withAlpha(160), fontSize: 14)),
+                  color: AppColors.appInk.withAlpha(204), fontSize: 14)),
           const Spacer(),
           SizedBox(
             width: 120,
             child: TextField(
-              controller:  ctrl,
-              textAlign:   TextAlign.right,
+              controller:   ctrl,
+              textAlign:    TextAlign.right,
               keyboardType: TextInputType.numberWithOptions(signed: signed),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^-?\d*')),
               ],
-              decoration: const InputDecoration(
-                border:  InputBorder.none,
-                isDense: true,
+              decoration: InputDecoration(
+                hintText:       '0',
+                hintStyle: TextStyle(color: AppColors.appInk.withAlpha(77)),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 14),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                      color: AppColors.appInk.withAlpha(77), width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                      color: AppColors.appInk, width: 2),
+                ),
+                filled:    true,
+                fillColor: AppColors.appPaper,
               ),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w500),
               onChanged: onChanged,
             ),
           ),

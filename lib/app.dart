@@ -49,6 +49,18 @@ ThemeData buildLightTheme() {
       color: AppColors.appCream,
       elevation: 1,
     ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected) ? AppColors.appInk : null),
+        foregroundColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected)
+                ? AppColors.appPaper
+                : AppColors.appInk),
+        side: WidgetStatePropertyAll(
+            BorderSide(color: AppColors.appInk.withAlpha(77))),
+      ),
+    ),
   );
 }
 
@@ -77,6 +89,18 @@ ThemeData buildDarkTheme() {
     cardTheme: const CardThemeData(
       color: AppColors.appCreamDark,
       elevation: 1,
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected) ? AppColors.appInkDark : null),
+        foregroundColor: WidgetStateProperty.resolveWith((s) =>
+            s.contains(WidgetState.selected)
+                ? AppColors.appPaperDark
+                : AppColors.appInkDark),
+        side: WidgetStatePropertyAll(
+            BorderSide(color: AppColors.appInkDark.withAlpha(77))),
+      ),
     ),
   );
 }
