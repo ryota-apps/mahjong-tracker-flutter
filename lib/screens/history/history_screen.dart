@@ -491,11 +491,15 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   bool      _balanceNeg = false;
   late final TextEditingController _balanceCtrl;
   late final TextEditingController _chipsCtrl;
-  late final TextEditingController _chipValCtrl;
+  // chipVal は chips × chipUnit で自動計算（手入力廃止）
   late final TextEditingController _venueFeeCtrl;
   late final TextEditingController _gameFeeCtrl;
   late final TextEditingController _topPrizeCtrl;
   late final TextEditingController _noteCtrl;
+
+  int get _chipUnit => widget.session.chipUnit;
+  int get _autoChipVal =>
+      (int.tryParse(_chipsCtrl.text) ?? 0) * _chipUnit;
 
   @override
   void initState() {
@@ -507,11 +511,12 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     _balanceNeg   = s.balance < 0;
     _balanceCtrl  = TextEditingController(text: '${s.balance.abs()}');
     _chipsCtrl    = TextEditingController(text: '${s.chips}');
-    _chipValCtrl  = TextEditingController(text: '${s.chipVal}');
     _venueFeeCtrl = TextEditingController(text: '${s.venueFee}');
     _gameFeeCtrl  = TextEditingController(text: s.gameFee  > 0 ? '${s.gameFee}'  : '');
     _topPrizeCtrl = TextEditingController(text: s.topPrize > 0 ? '${s.topPrize}' : '');
     _noteCtrl     = TextEditingController(text: s.note);
+    // chips 変更時に再描画して自動計算値を反映
+    _chipsCtrl.addListener(() => setState(() {}));
   }
 
   static const _placeNames  = ['1着', '2着', '3着', '4着'];
@@ -542,7 +547,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   @override
   void dispose() {
     _shopCtrl.dispose(); _balanceCtrl.dispose(); _chipsCtrl.dispose();
-    _chipValCtrl.dispose(); _venueFeeCtrl.dispose();
+    _venueFeeCtrl.dispose();
     _gameFeeCtrl.dispose(); _topPrizeCtrl.dispose(); _noteCtrl.dispose();
     super.dispose();
   }
@@ -551,7 +556,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
     final balance  = _balanceNeg ? -rawBalance : rawBalance;
     final chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
-    final chipVal  = int.tryParse(_chipValCtrl.text)  ?? 0;
+    final chipVal  = _autoChipVal;
     final venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
     final gameFee  = int.tryParse(_gameFeeCtrl.text)  ?? widget.session.gameFee;
     final topPrize = int.tryParse(_topPrizeCtrl.text) ?? widget.session.topPrize;
@@ -723,7 +728,35 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
               ),
             ),
             _EditRow(label: 'チップ枚数', ctrl: _chipsCtrl, signed: true),
-            _EditRow(label: 'チップ収支', ctrl: _chipValCtrl, signed: true),
+            // チップ収支は chipUnit > 0 のとき自動計算して読み取り専用表示
+            if (_chipUnit > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: Text('チップ収支',
+                          style: TextStyle(
+                              color: AppColors.appInk.withAlpha(160),
+                              fontSize: 13)),
+                    ),
+                    Expanded(
+                      child: Text(
+                        signedCommaStr(_autoChipVal),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: _autoChipVal >= 0
+                              ? AppColors.appTeal
+                              : AppColors.appRed,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             _EditRow(label: '場代',     ctrl: _venueFeeCtrl),
             if (widget.session.gameType == 'free') ...[
               _EditRow(label: 'ゲーム代/局', ctrl: _gameFeeCtrl,  keyboard: TextInputType.number),
