@@ -147,6 +147,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           ],
         ),
       );
+      if (!mounted) return;
       if (resume == true) {
         draft = jsonDecode(draftStr) as Map<String, dynamic>;
       } else {
@@ -155,7 +156,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     }
 
     if (!mounted) return;
-    _saveLast();
+    await _saveLast();
+    if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SessionInputScreen(
         date:     _date,
