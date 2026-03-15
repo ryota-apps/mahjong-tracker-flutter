@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import '../../app.dart';
 import '../../models/shop.dart';
 import '../../providers/shop_provider.dart';
@@ -179,7 +181,12 @@ class _ShopCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(shop.name, style: shopNameStyle()),
+                child: Text(shop.name,
+                    style: GoogleFonts.notoSerif(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: AppColors.appInk,
+                    )),
               ),
               IconButton(
                 onPressed: onEdit,

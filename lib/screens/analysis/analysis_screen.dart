@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import '../../app.dart';
 import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
@@ -525,7 +527,12 @@ class _ShopStats extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: shopNameStyle(fontSize: 14)),
+                Text(name,
+                    style: GoogleFonts.notoSerif(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: AppColors.appInk,
+                    )),
                 const SizedBox(height: 4),
                 Row(
                   children: [

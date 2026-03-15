@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import '../../app.dart';
 import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
@@ -369,7 +371,12 @@ class _SessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(session.shop, style: shopNameStyle()),
+                    Text(session.shop,
+                        style: GoogleFonts.notoSerif(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: AppColors.appInk,
+                        )),
                     const SizedBox(height: 2),
                     Text(
                       '${DateFormat('yyyy/M/d (E)', 'ja').format(session.date)}  '
