@@ -67,43 +67,42 @@ class _ToastOverlayState extends State<_ToastOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom
+        + kBottomNavigationBarHeight
+        + 16;
+
     return Positioned(
-      bottom: MediaQuery.of(context).padding.bottom + 80,
-      left:   0,
-      right:  0,
+      bottom: bottomInset,
+      left:   24,
+      right:  24,
       child: IgnorePointer(
         child: FadeTransition(
           opacity: _opacity,
           child: SlideTransition(
             position: _slide,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color:        AppColors.appInk.withAlpha(235),
-                  borderRadius: BorderRadius.circular(100),
-                  boxShadow: const [
-                    BoxShadow(
-                      color:      Colors.black26,
-                      blurRadius: 8,
-                      offset:     Offset(0, 2),
-                    ),
-                  ],
-                ),
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.85,
-                ),
-                child: Text(
-                  widget.message,
-                  style: const TextStyle(
-                    color:    Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color:        AppColors.appInk,   // 完全不透明
+                borderRadius: BorderRadius.circular(100),
+                boxShadow: const [
+                  BoxShadow(
+                    color:      Colors.black26,
+                    blurRadius: 8,
+                    offset:     Offset(0, 2),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines:  2,
-                  overflow:  TextOverflow.ellipsis,
+                ],
+              ),
+              child: Text(
+                widget.message,
+                style: const TextStyle(
+                  color:      Colors.white,
+                  fontSize:   14,
+                  fontWeight: FontWeight.w500,
                 ),
+                textAlign: TextAlign.center,
+                maxLines:  2,
+                overflow:  TextOverflow.ellipsis,
               ),
             ),
           ),
