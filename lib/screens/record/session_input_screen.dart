@@ -48,7 +48,8 @@ class SessionInputScreen extends ConsumerStatefulWidget {
 
 class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   late int _chipUnit;
-  bool     _balanceNeg = false;
+  bool     _balanceNeg  = false;
+  bool     _isChipNeg   = false;
 
   // ── 着順カウント ──────────────────────────────────────────────────────────
   int _c1 = 0, _c2 = 0, _c3 = 0, _c4 = 0;
@@ -81,7 +82,8 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       _c2          = (counts['2'] as int?) ?? 0;
       _c3          = (counts['3'] as int?) ?? 0;
       _c4          = (counts['4'] as int?) ?? 0;
-      _balanceNeg   = (d['balanceNeg'] as bool?) ?? false;
+      _balanceNeg   = (d['balanceNeg']  as bool?) ?? false;
+      _isChipNeg    = (d['isChipNeg']   as bool?) ?? false;
       _balanceCtrl  = TextEditingController(text: (d['balance']        as String?) ?? '');
       _chipsCtrl    = TextEditingController(text: (d['chips']          as String?) ?? '');
       _chipUnitCtrl = TextEditingController(text: (d['chipUnitManual'] as String?) ?? '$_chipUnit');
@@ -123,6 +125,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
       'balance':       _balanceCtrl.text,
       'balanceNeg':    _balanceNeg,
       'chips':         _chipsCtrl.text,
+      'isChipNeg':     _isChipNeg,
       'chipUnitManual': _chipUnitCtrl.text,
       'venueFee':      _venueFeeCtrl.text,
       'note':          _noteCtrl.text,
@@ -163,7 +166,8 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   void _recalc() {
     final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
     _balance  = _balanceNeg ? -rawBalance : rawBalance;
-    _chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
+    final rawChips = int.tryParse(_chipsCtrl.text) ?? 0;
+    _chips    = _isChipNeg ? -rawChips : rawChips;
     _chipUnit = int.tryParse(_chipUnitCtrl.text) ?? 0;
     _venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
     _chipVal  = _chips * _chipUnit;
@@ -418,10 +422,14 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
           ),
           if (showChip) ...[
             _divider(),
-            _InputRow(
-              label:     'チップ枚数',
-              ctrl:      _chipsCtrl,
-              signed:    true,
+            _BalanceRow(
+              label:        'チップ枚数',
+              ctrl:         _chipsCtrl,
+              isNegative:   _isChipNeg,
+              onToggleSign: () {
+                setState(() => _isChipNeg = !_isChipNeg);
+                _recalc();
+              },
               onChanged: (_) => _recalc(),
             ),
           ],

@@ -488,6 +488,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   late final TextEditingController _shopCtrl;
   late int  _c1, _c2, _c3, _c4;
   bool      _balanceNeg = false;
+  bool      _isChipNeg  = false;
   late final TextEditingController _balanceCtrl;
   late final TextEditingController _chipsCtrl;
   // chipVal は chips × chipUnit で自動計算（手入力廃止）
@@ -497,8 +498,9 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   late final TextEditingController _noteCtrl;
 
   int get _chipUnit => widget.session.chipUnit;
-  int get _autoChipVal =>
-      (int.tryParse(_chipsCtrl.text) ?? 0) * _chipUnit;
+  int get _signedChips =>
+      (_isChipNeg ? -1 : 1) * (int.tryParse(_chipsCtrl.text) ?? 0);
+  int get _autoChipVal => _signedChips * _chipUnit;
 
   @override
   void initState() {
@@ -508,8 +510,9 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
     _shopCtrl     = TextEditingController(text: s.shop);
     _c1 = s.count1; _c2 = s.count2; _c3 = s.count3; _c4 = s.count4;
     _balanceNeg   = s.balance < 0;
+    _isChipNeg    = s.chips < 0;
     _balanceCtrl  = TextEditingController(text: '${s.balance.abs()}');
-    _chipsCtrl    = TextEditingController(text: '${s.chips}');
+    _chipsCtrl    = TextEditingController(text: '${s.chips.abs()}');
     _venueFeeCtrl = TextEditingController(text: '${s.venueFee}');
     _gameFeeCtrl  = TextEditingController(text: s.gameFee  > 0 ? '${s.gameFee}'  : '');
     _topPrizeCtrl = TextEditingController(text: s.topPrize > 0 ? '${s.topPrize}' : '');
@@ -554,7 +557,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
   Future<void> _save() async {
     final rawBalance = int.tryParse(_balanceCtrl.text) ?? 0;
     final balance  = _balanceNeg ? -rawBalance : rawBalance;
-    final chips    = int.tryParse(_chipsCtrl.text)    ?? 0;
+    final chips    = _signedChips;
     final chipVal  = _autoChipVal;
     final venueFee = int.tryParse(_venueFeeCtrl.text) ?? 0;
     final gameFee  = int.tryParse(_gameFeeCtrl.text)  ?? widget.session.gameFee;
@@ -726,7 +729,57 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
                 ],
               ),
             ),
-            _EditRow(label: 'チップ枚数', ctrl: _chipsCtrl, signed: true),
+            // チップ枚数（+/− トグル付き）
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    child: Text('チップ枚数',
+                        style: TextStyle(
+                            color: AppColors.appInk.withAlpha(160),
+                            fontSize: 13)),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() => _isChipNeg = !_isChipNeg),
+                    child: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: _isChipNeg
+                            ? AppColors.appRed
+                            : AppColors.appTeal,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _isChipNeg ? '−' : '＋',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _chipsCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly
+                      ],
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: UnderlineInputBorder(),
+                        hintText: '0',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // チップ収支は chipUnit > 0 のとき自動計算して読み取り専用表示
             if (_chipUnit > 0)
               Padding(
@@ -792,21 +845,16 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
 class _EditRow extends StatelessWidget {
   final String label;
   final TextEditingController ctrl;
-  final bool signed;
   final TextInputType? keyboard;
   const _EditRow({
     required this.label,
     required this.ctrl,
-    this.signed = false,
     this.keyboard,
   });
 
   @override
   Widget build(BuildContext context) {
-    final keyboardType = keyboard ??
-        (signed
-            ? const TextInputType.numberWithOptions(signed: true)
-            : TextInputType.text);
+    final keyboardType = keyboard ?? TextInputType.text;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(

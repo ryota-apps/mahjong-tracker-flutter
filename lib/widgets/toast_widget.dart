@@ -78,15 +78,15 @@ class _ToastOverlayState extends State<_ToastOverlay>
             position: _slide,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color:        AppColors.appInk.withAlpha(230),
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
+                  color:        AppColors.appInk.withAlpha(235),
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: const [
                     BoxShadow(
-                      color:      Colors.black.withAlpha(40),
+                      color:      Colors.black26,
                       blurRadius: 8,
-                      offset:     const Offset(0, 4),
+                      offset:     Offset(0, 2),
                     ),
                   ],
                 ),
