@@ -53,7 +53,7 @@ class _MainShellState extends State<MainShell> {
     BottomNavigationBarItem(icon: Icon(Icons.list), label: '一覧'),
     BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: '分析'),
     BottomNavigationBarItem(icon: Icon(Icons.store), label: '店舗'),
-    BottomNavigationBarItem(icon: Icon(Icons.upload_file), label: 'データ'),
+    BottomNavigationBarItem(icon: Icon(Icons.folder_open), label: 'データ'),
   ];
 
   @override
