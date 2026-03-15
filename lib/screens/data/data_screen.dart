@@ -128,45 +128,53 @@ class _DataScreenState extends ConsumerState<DataScreen> {
     );
     if (result == null || result.files.single.path == null) return;
 
-    final raw  = await File(result.files.single.path!).readAsString();
-    final data = jsonDecode(raw) as Map<String, dynamic>;
+    try {
+      final raw  = await File(result.files.single.path!).readAsString();
+      final data = jsonDecode(raw) as Map<String, dynamic>;
 
-    final existingSessions = ref.read(sessionProvider);
-    final existingShops    = ref.read(shopProvider);
+      final existingSessions = ref.read(sessionProvider);
+      final existingShops    = ref.read(shopProvider);
 
-    final existingSessionIds = existingSessions.map((s) => s.id).toSet();
-    final existingShopIds    = existingShops.map((s)    => s.id).toSet();
+      final existingSessionIds = existingSessions.map((s) => s.id).toSet();
+      final existingShopIds    = existingShops.map((s)    => s.id).toSet();
 
-    int importedSessions = 0;
-    int importedShops    = 0;
+      int importedSessions = 0;
+      int importedShops    = 0;
 
-    if (data['sessions'] != null) {
-      for (final raw in data['sessions'] as List) {
-        final s = Session.fromMap(raw as Map<String, dynamic>);
-        if (!existingSessionIds.contains(s.id)) {
-          await DatabaseHelper.instance.insertSession(s);
-          importedSessions++;
+      if (data['sessions'] != null) {
+        for (final row in data['sessions'] as List) {
+          final s = Session.fromMap(row as Map<String, dynamic>);
+          if (!existingSessionIds.contains(s.id)) {
+            await DatabaseHelper.instance.insertSession(s);
+            importedSessions++;
+          }
         }
       }
-    }
-    if (data['shops'] != null) {
-      for (final raw in data['shops'] as List) {
-        final s = Shop.fromMap(raw as Map<String, dynamic>);
-        if (!existingShopIds.contains(s.id)) {
-          await DatabaseHelper.instance.insertShop(s);
-          importedShops++;
+      if (data['shops'] != null) {
+        for (final row in data['shops'] as List) {
+          final s = Shop.fromMap(row as Map<String, dynamic>);
+          if (!existingShopIds.contains(s.id)) {
+            await DatabaseHelper.instance.insertShop(s);
+            importedShops++;
+          }
         }
       }
-    }
 
-    await ref.read(sessionProvider.notifier).refresh();
-    await ref.read(shopProvider.notifier).refresh();
+      await ref.read(sessionProvider.notifier).refresh();
+      await ref.read(shopProvider.notifier).refresh();
 
-    if (mounted) {
-      showToast(
-        context,
-        '$importedSessions件のセッション、$importedShops件の店舗をインポートしました',
-      );
+      if (mounted) {
+        showToast(
+          context,
+          '$importedSessions件のセッション、$importedShops件の店舗をインポートしました',
+        );
+      }
+    } on FormatException catch (e) {
+      debugPrint('importJson FormatException: $e');
+      if (mounted) showToast(context, 'ファイルの形式が不正です。正しいバックアップファイルを選択してください。');
+    } catch (e) {
+      debugPrint('importJson error: $e');
+      if (mounted) showToast(context, 'インポートに失敗しました。ファイルを確認してください。');
     }
   }
 
