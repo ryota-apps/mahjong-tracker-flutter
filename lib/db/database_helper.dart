@@ -19,8 +19,20 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'mahjong_tracker.db');
     return openDatabase(
       path,
-      version: 1,
+      // ── バージョン管理ルール ──────────────────────────────────────────────
+      // カラムを追加するときは version を +1 して onUpgrade に
+      // ALTER TABLE を追記すること。
+      // 例:
+      //   if (oldVersion < 3) {
+      //     await db.execute(
+      //         'ALTER TABLE sessions ADD COLUMN newField TEXT NOT NULL DEFAULT ""');
+      //   }
+      // ─────────────────────────────────────────────────────────────────────
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // version 1 → 2: スキーマ変更なし（将来追加に備えたスケルトン）
+      },
     );
   }
 
