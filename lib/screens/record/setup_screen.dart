@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
 import '../../models/shop.dart';
+import '../../providers/session_provider.dart';
 import '../../providers/shop_provider.dart';
+import '../../utils/session_utils.dart';
 import 'session_input_screen.dart';
 
 // ─── レートの選択肢 ─────────────────────────────────────────────────────────
@@ -187,7 +189,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final shops = ref.watch(shopProvider);
+    final shops    = ref.watch(shopProvider);
+    final sessions = ref.watch(sessionProvider);
+    final todayNet = todayNetTotal(sessions);
 
     return Scaffold(
       appBar: AppBar(title: const Text('記録する')),
@@ -344,6 +348,35 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 今日の収支合計（1件以上あるときのみ表示）
+                if (sessions.any((s) {
+                  final t = DateTime.now();
+                  return s.date.year == t.year &&
+                      s.date.month == t.month &&
+                      s.date.day == t.day;
+                }))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('今日: ',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.appInk.withAlpha(153))),
+                        Text(
+                          signedYen(todayNet),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: todayNet >= 0
+                                ? AppColors.appTeal
+                                : AppColors.appRed,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 FilledButton(
                   onPressed: _startSession,
                   style: FilledButton.styleFrom(
