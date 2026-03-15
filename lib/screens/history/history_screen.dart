@@ -194,12 +194,12 @@ class _SummaryBar extends StatelessWidget {
             ),
             _SumItem(
               label: '収支合計',
-              value: signedStr(total),
+              value: signedYen(total),
               valueColor: total >= 0 ? AppColors.appTeal : AppColors.appRed,
             ),
             _SumItem(
               label: '平均収支',
-              value: signedStr(avgNet),
+              value: signedYen(avgNet),
               valueColor: avgNet >= 0 ? AppColors.appTeal : AppColors.appRed,
             ),
           ],
@@ -457,7 +457,7 @@ class _SessionCard extends StatelessWidget {
                 ),
               if (session.venueFee != 0)
                 _Badge(
-                  label: '場代−${session.venueFee}',
+                  label: '場代 ${formatYen(session.venueFee)}',
                   color: AppColors.appRed.withAlpha(20),
                   textColor: AppColors.appRed,
                 ),
