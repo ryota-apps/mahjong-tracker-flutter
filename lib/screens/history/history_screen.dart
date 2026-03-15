@@ -8,6 +8,7 @@ import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/filter_chip_bar.dart';
 import '../../widgets/toast_widget.dart';
 
 // ─── レート・ソートラベル ─────────────────────────────────────────────────────
@@ -62,71 +63,67 @@ class _FilterBar extends ConsumerWidget {
     final shopNames = sessions.map((s) => s.shop).toSet().toList()..sort();
     final rates     = sessions.map((s) => s.rule).toSet().toList()..sort();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          // 期間
-          ..._periodLabels.asMap().entries.map((e) => _Chip(
-            label:    e.value,
-            selected: f.period.index == e.key,
-            onTap: () => ntf.update((s) => s.copyWith(period: PeriodFilter.values[e.key])),
-          )),
-          const _Divider(),
-          // 人数
-          ..._playersLabels.asMap().entries.map((e) => _Chip(
-            label:    e.value,
-            selected: f.players.index == e.key,
-            onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.values[e.key])),
-          )),
-          const _Divider(),
-          // 種別
-          ..._typeLabels.asMap().entries.map((e) => _Chip(
-            label:    e.value,
-            selected: f.gameType.index == e.key,
-            onTap: () => ntf.update((s) => s.copyWith(gameType: GameTypeFilter.values[e.key])),
-          )),
-          const _Divider(),
-          // 店舗
-          _Chip(
-            label:    '全店舗',
-            selected: f.shopId == null,
-            onTap: () => ntf.update((s) => s.copyWith(clearShopId: true)),
-          ),
-          ...shopNames.map((n) => _Chip(
-            label:    n,
-            selected: f.shopId == n,
-            onTap: () => ntf.update((s) => s.copyWith(shopId: n)),
-          )),
-          const _Divider(),
-          // レート
-          _Chip(
-            label:    '全レート',
-            selected: f.rate == null,
-            onTap: () => ntf.update((s) => s.copyWith(clearRate: true)),
-          ),
-          ...rates.map((r) => _Chip(
-            label:    r == 0 ? '未設定' : '${r}pt',
-            selected: f.rate == r,
-            onTap: () => ntf.update((s) => s.copyWith(rate: r)),
-          )),
-          const _Divider(),
-          // ゲーム代差し引く
-          _Chip(
-            label:    'ゲーム代差引',
-            selected: !f.withFees,
-            onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
-          ),
-          const _Divider(),
-          // ソート
-          ..._sortLabels.asMap().entries.map((e) => _Chip(
-            label:    e.value,
-            selected: f.sortOrder.index == e.key,
-            onTap: () => ntf.update((s) => s.copyWith(sortOrder: SortOrder.values[e.key])),
-          )),
-        ],
-      ),
+    return FilterChipBar(
+      children: [
+        // 期間
+        ..._periodLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.period.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(period: PeriodFilter.values[e.key])),
+        )),
+        const FilterBarDivider(),
+        // 人数
+        ..._playersLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.players.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.values[e.key])),
+        )),
+        const FilterBarDivider(),
+        // 種別
+        ..._typeLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.gameType.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(gameType: GameTypeFilter.values[e.key])),
+        )),
+        const FilterBarDivider(),
+        // 店舗
+        AppFilterChip(
+          label:    '全店舗',
+          selected: f.shopId == null,
+          onTap: () => ntf.update((s) => s.copyWith(clearShopId: true)),
+        ),
+        ...shopNames.map((n) => AppFilterChip(
+          label:    n,
+          selected: f.shopId == n,
+          onTap: () => ntf.update((s) => s.copyWith(shopId: n)),
+        )),
+        const FilterBarDivider(),
+        // レート
+        AppFilterChip(
+          label:    '全レート',
+          selected: f.rate == null,
+          onTap: () => ntf.update((s) => s.copyWith(clearRate: true)),
+        ),
+        ...rates.map((r) => AppFilterChip(
+          label:    r == 0 ? '未設定' : '${r}pt',
+          selected: f.rate == r,
+          onTap: () => ntf.update((s) => s.copyWith(rate: r)),
+        )),
+        const FilterBarDivider(),
+        // ゲーム代差し引く
+        AppFilterChip(
+          label:    'ゲーム代差引',
+          selected: !f.withFees,
+          onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
+        ),
+        const FilterBarDivider(),
+        // ソート
+        ..._sortLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.sortOrder.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(sortOrder: SortOrder.values[e.key])),
+        )),
+      ],
     );
   }
 }
@@ -372,11 +369,7 @@ class _SessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(session.shop,
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Georgia')),
+                    Text(session.shop, style: shopNameStyle()),
                     const SizedBox(height: 2),
                     Text(
                       '${DateFormat('yyyy/M/d (E)', 'ja').format(session.date)}  '
@@ -641,50 +634,6 @@ class _EditRow extends StatelessWidget {
 }
 
 // ── ユーティリティ ──────────────────────────────────────────────────────────
-class _Chip extends StatelessWidget {
-  final String label;
-  final bool   selected;
-  final VoidCallback onTap;
-  const _Chip({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.appInk : AppColors.appCream,
-          borderRadius: BorderRadius.circular(20),
-          border: selected
-              ? null
-              : Border.all(color: AppColors.appInk.withAlpha(40)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: selected ? AppColors.appPaper : AppColors.appInk,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  const _Divider();
-  @override
-  Widget build(BuildContext context) => Container(
-        width:  1,
-        height: 20,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        color:  AppColors.appInk.withAlpha(30),
-      );
-}
-
 class _Badge extends StatelessWidget {
   final String label;
   final Color  color;

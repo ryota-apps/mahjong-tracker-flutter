@@ -179,11 +179,7 @@ class _ShopCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(shop.name,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Georgia')),
+                child: Text(shop.name, style: shopNameStyle()),
               ),
               IconButton(
                 onPressed: onEdit,

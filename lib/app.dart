@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   AppColors._();
@@ -23,59 +24,91 @@ class AppColors {
   static const appRedDark   = Color(0xFFE05445);
 }
 
+/// 店舗名・セクションタイトルに使う serif TextStyle を返す。
+TextStyle shopNameStyle({
+  double   fontSize  = 16,
+  FontWeight weight  = FontWeight.bold,
+  Color?   color,
+}) =>
+    GoogleFonts.notoSerifJp(
+      fontSize:   fontSize,
+      fontWeight: weight,
+      color:      color ?? AppColors.appInk,
+    );
+
 ThemeData buildLightTheme() {
+  final base = ThemeData.light();
+  final notoSans = GoogleFonts.notoSansJpTextTheme(base.textTheme)
+      .apply(bodyColor: AppColors.appInk, displayColor: AppColors.appInk);
+
   return ThemeData(
     useMaterial3: true,
-    colorScheme: const ColorScheme.light(
-      surface: AppColors.appPaper,
-      primary: AppColors.appTeal,
+    textTheme:    notoSans,
+    colorScheme:  const ColorScheme.light(
+      surface:   AppColors.appPaper,
+      primary:   AppColors.appTeal,
       secondary: AppColors.appTealLight,
-      error: AppColors.appRed,
+      error:     AppColors.appRed,
       onSurface: AppColors.appInk,
       onPrimary: Colors.white,
     ),
     scaffoldBackgroundColor: AppColors.appPaper,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.appPaper,
       foregroundColor: AppColors.appInk,
-      elevation: 0,
+      elevation:       0,
+      titleTextStyle:  GoogleFonts.notoSansJp(
+        fontSize:   18,
+        fontWeight: FontWeight.w600,
+        color:      AppColors.appInk,
+      ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.appPaper,
+      backgroundColor:   AppColors.appPaper,
       selectedItemColor: AppColors.appTeal,
       unselectedItemColor: AppColors.place4,
     ),
     cardTheme: const CardThemeData(
-      color: AppColors.appCream,
+      color:     AppColors.appCream,
       elevation: 1,
     ),
   );
 }
 
 ThemeData buildDarkTheme() {
+  final base = ThemeData.dark();
+  final notoSans = GoogleFonts.notoSansJpTextTheme(base.textTheme)
+      .apply(bodyColor: AppColors.appInkDark, displayColor: AppColors.appInkDark);
+
   return ThemeData(
     useMaterial3: true,
-    colorScheme: const ColorScheme.dark(
-      surface: AppColors.appPaperDark,
-      primary: AppColors.appTealDark,
+    textTheme:    notoSans,
+    colorScheme:  const ColorScheme.dark(
+      surface:   AppColors.appPaperDark,
+      primary:   AppColors.appTealDark,
       secondary: AppColors.appTealLight,
-      error: AppColors.appRedDark,
+      error:     AppColors.appRedDark,
       onSurface: AppColors.appInkDark,
       onPrimary: Colors.white,
     ),
     scaffoldBackgroundColor: AppColors.appPaperDark,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.appPaperDark,
       foregroundColor: AppColors.appInkDark,
-      elevation: 0,
+      elevation:       0,
+      titleTextStyle:  GoogleFonts.notoSansJp(
+        fontSize:   18,
+        fontWeight: FontWeight.w600,
+        color:      AppColors.appInkDark,
+      ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.appPaperDark,
-      selectedItemColor: AppColors.appTealDark,
+      backgroundColor:     AppColors.appPaperDark,
+      selectedItemColor:   AppColors.appTealDark,
       unselectedItemColor: AppColors.place4,
     ),
     cardTheme: const CardThemeData(
-      color: AppColors.appCreamDark,
+      color:     AppColors.appCreamDark,
       elevation: 1,
     ),
   );

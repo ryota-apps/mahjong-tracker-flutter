@@ -125,6 +125,28 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   // ── 保存 ─────────────────────────────────────────────────────────────────
   Future<void> _save() async {
     _recalc();
+    // ゲーム数0チェック
+    final totalGames = _c1 + _c2 + _c3 + (widget.players == 4 ? _c4 : 0);
+    if (totalGames == 0) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title:   const Text('ゲーム数が0です'),
+          content: const Text('ゲーム数が0ですが、このまま保存しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('保存する'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
     final session = Session(
       shop:      widget.shopName,
       date:      widget.date,

@@ -8,6 +8,7 @@ import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/filter_chip_bar.dart';
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
@@ -63,37 +64,33 @@ class _FilterBar extends ConsumerWidget {
     final ntf = ref.read(filterProvider.notifier);
     const periodLabels = ['全期間', '今月', '先月', '直近3ヶ月'];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          ...periodLabels.asMap().entries.map((e) => _FilterChip(
-            label:    e.value,
-            selected: f.period.index == e.key,
-            onTap: () => ntf.update((s) => s.copyWith(
-                period: PeriodFilter.values[e.key])),
-          )),
-          const _VDivider(),
-          _FilterChip(
-            label: '全人数', selected: f.players == PlayersFilter.all,
-            onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.all)),
-          ),
-          _FilterChip(
-            label: '3人', selected: f.players == PlayersFilter.three,
-            onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.three)),
-          ),
-          _FilterChip(
-            label: '4人', selected: f.players == PlayersFilter.four,
-            onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.four)),
-          ),
-          const _VDivider(),
-          _FilterChip(
-            label: 'ゲーム代差引', selected: !f.withFees,
-            onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
-          ),
-        ],
-      ),
+    return FilterChipBar(
+      children: [
+        ...periodLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.period.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(
+              period: PeriodFilter.values[e.key])),
+        )),
+        const FilterBarDivider(),
+        AppFilterChip(
+          label: '全人数', selected: f.players == PlayersFilter.all,
+          onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.all)),
+        ),
+        AppFilterChip(
+          label: '3人', selected: f.players == PlayersFilter.three,
+          onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.three)),
+        ),
+        AppFilterChip(
+          label: '4人', selected: f.players == PlayersFilter.four,
+          onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.four)),
+        ),
+        const FilterBarDivider(),
+        AppFilterChip(
+          label: 'ゲーム代差引', selected: !f.withFees,
+          onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
+        ),
+      ],
     );
   }
 }
@@ -125,9 +122,10 @@ class _CumulativeChart extends StatelessWidget {
 
     return _AnalysisCard(
       title: '累計純収支の推移',
-      child: SizedBox(
-        height: 200,
-        child: LineChart(
+      child: RepaintBoundary(
+        child: SizedBox(
+          height: 200,
+          child: LineChart(
           LineChartData(
             minX: 0,
             maxX: (spots.length - 1).toDouble(),
@@ -205,7 +203,7 @@ class _CumulativeChart extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -292,8 +290,9 @@ class _MonthlyChart extends StatelessWidget {
 
     return _AnalysisCard(
       title: '月別収支（直近6ヶ月）',
-      child: SizedBox(
-        height: 180,
+      child: RepaintBoundary(
+        child: SizedBox(
+          height: 180,
         child: BarChart(
           BarChartData(
             maxY: maxY + maxY.abs() * 0.2,
@@ -341,7 +340,7 @@ class _MonthlyChart extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -526,11 +525,7 @@ class _ShopStats extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Georgia')),
+                Text(name, style: shopNameStyle(fontSize: 14)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -640,47 +635,6 @@ class _StatPill extends StatelessWidget {
               fontWeight: FontWeight.w500)),
     );
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool   selected;
-  final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color:        selected ? AppColors.appInk : AppColors.appCream,
-          borderRadius: BorderRadius.circular(20),
-          border: selected
-              ? null
-              : Border.all(color: AppColors.appInk.withAlpha(40)),
-        ),
-        child: Text(label,
-            style: TextStyle(
-              fontSize:   12,
-              color:      selected ? AppColors.appPaper : AppColors.appInk,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-            )),
-      ),
-    );
-  }
-}
-
-class _VDivider extends StatelessWidget {
-  const _VDivider();
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 1, height: 20,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        color: AppColors.appInk.withAlpha(30),
-      );
 }
 
 class _EmptyState extends StatelessWidget {
