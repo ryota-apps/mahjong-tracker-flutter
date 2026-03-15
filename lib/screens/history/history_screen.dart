@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app.dart';
+import '../../constants/game_type.dart';
 import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
@@ -342,7 +343,7 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFree = session.gameType == 'free';
+    final isFree = session.gameType == GameType.free;
     final counts = [session.count1, session.count2, session.count3, session.count4];
 
     return Container(
@@ -562,7 +563,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
 
     // session_utils.getNet() と整合した計算
     final int net;
-    if (widget.session.gameType == 'free') {
+    if (widget.session.gameType == GameType.free) {
       net = balance + chipVal
           - (totalGames * gameFee)
           - (_c1 * topPrize);
@@ -756,7 +757,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
                 ),
               ),
             _EditRow(label: '場代',     ctrl: _venueFeeCtrl),
-            if (widget.session.gameType == 'free') ...[
+            if (widget.session.gameType == GameType.free) ...[
               _EditRow(label: 'ゲーム代/局', ctrl: _gameFeeCtrl,  keyboard: TextInputType.number),
               _EditRow(label: 'トップ賞/回', ctrl: _topPrizeCtrl, keyboard: TextInputType.number),
             ],

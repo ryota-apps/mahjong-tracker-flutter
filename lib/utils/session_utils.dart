@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../constants/game_type.dart';
 import '../models/session.dart';
 
 final _numFormat = NumberFormat('#,###', 'ja_JP');
@@ -7,7 +8,7 @@ final _numFormat = NumberFormat('#,###', 'ja_JP');
 /// ゲーム代差し引きを考慮した純収支を返す。
 int getNet(Session session, bool withFees) {
   if (withFees) return session.net;
-  if (session.gameType == 'set') return session.net + session.venueFee;
+  if (session.gameType == GameType.set) return session.net + session.venueFee;
   if (session.gameFee > 0 || session.topPrize > 0) {
     return session.net +
         session.totalGames * session.gameFee +

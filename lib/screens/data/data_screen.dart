@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
+import '../../constants/game_type.dart';
 import '../../db/database_helper.dart';
 import '../../models/session.dart';
 import '../../models/shop.dart';
@@ -98,7 +99,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
         s.shop,
         s.players,
         s.format,
-        s.gameType == 'free' ? 'フリー' : 'セット',
+        GameType.label(s.gameType),
         s.rule,
         s.count1, s.count2, s.count3, s.count4,
         s.totalGames,

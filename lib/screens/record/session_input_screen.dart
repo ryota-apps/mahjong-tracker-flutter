@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
+import '../../constants/game_type.dart';
 import '../../models/session.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
@@ -171,7 +172,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
   }
 
   int get _net {
-    if (widget.gameType == 'free') return _balance + _chipVal;
+    if (widget.gameType == GameType.free) return _balance + _chipVal;
     return _balance + _chipVal - _venueFee;
   }
 
@@ -257,7 +258,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isFree   = widget.gameType == 'free';
+    final isFree   = widget.gameType == GameType.free;
     final showChip = _chipUnit > 0 || !isFree;
 
     return PopScope(

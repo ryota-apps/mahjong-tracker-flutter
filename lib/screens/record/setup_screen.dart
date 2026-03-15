@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
+import '../../constants/game_type.dart';
 import '../../models/shop.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/shop_provider.dart';
@@ -45,7 +46,7 @@ class SetupScreen extends ConsumerStatefulWidget {
 
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   DateTime _date     = DateTime.now();
-  String   _gameType = 'free';
+  String   _gameType = GameType.free;
   String   _shopName = '';
   int      _rule     = 0;
   int      _players  = 4;
@@ -237,14 +238,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       children: [
                         Expanded(child: _ToggleBtn(
                           label:    'フリー',
-                          selected: _gameType == 'free',
-                          onTap:    () => setState(() => _gameType = 'free'),
+                          selected: _gameType == GameType.free,
+                          onTap:    () => setState(() => _gameType = GameType.free),
                         )),
                         const SizedBox(width: 8),
                         Expanded(child: _ToggleBtn(
                           label:    'セット',
-                          selected: _gameType == 'set',
-                          onTap:    () => setState(() => _gameType = 'set'),
+                          selected: _gameType == GameType.set,
+                          onTap:    () => setState(() => _gameType = GameType.set),
                         )),
                       ],
                     ),

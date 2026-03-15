@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../constants/game_type.dart';
 import '../models/session.dart';
 import '../utils/session_utils.dart';
 
@@ -85,8 +86,8 @@ List<Session> applyFilter(
   if (f.players == PlayersFilter.four)  result = result.where((s) => s.players == 4);
 
   // 種別
-  if (f.gameType == GameTypeFilter.free) result = result.where((s) => s.gameType == 'free');
-  if (f.gameType == GameTypeFilter.set_) result = result.where((s) => s.gameType == 'set');
+  if (f.gameType == GameTypeFilter.free) result = result.where((s) => s.gameType == GameType.free);
+  if (f.gameType == GameTypeFilter.set_) result = result.where((s) => s.gameType == GameType.set);
 
   // 店舗
   if (f.shopId != null) result = result.where((s) => s.shop == f.shopId);

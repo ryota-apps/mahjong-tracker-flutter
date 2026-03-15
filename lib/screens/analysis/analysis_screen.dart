@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app.dart';
+import '../../constants/game_type.dart';
 import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
@@ -710,7 +711,6 @@ class _SessionDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFree = session.gameType == 'free';
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -727,7 +727,7 @@ class _SessionDetailSheet extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
             Text(
-              '${session.players}人  ${session.format}  ${isFree ? "フリー" : "セット"}',
+              '${session.players}人  ${session.format}  ${GameType.label(session.gameType)}',
               style: TextStyle(fontSize: 12, color: AppColors.appInk.withAlpha(128)),
             ),
             const SizedBox(height: 16),
