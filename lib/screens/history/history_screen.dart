@@ -25,9 +25,10 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessions = ref.watch(sessionProvider);
-    final filter   = ref.watch(filterProvider);
-    final filtered = applyFilter(sessions, filter, filter.withFees);
+    final sessionState = ref.watch(sessionProvider);
+    final filter       = ref.watch(filterProvider);
+    final sessions     = sessionState.sessions;
+    final filtered     = applyFilter(sessions, filter, filter.withFees);
 
     return Scaffold(
       appBar: AppBar(title: const Text('戦績一覧')),
@@ -39,13 +40,15 @@ class HistoryScreen extends ConsumerWidget {
           if (filtered.isNotEmpty) _SummaryBar(sessions: filtered, withFees: filter.withFees),
           // リスト
           Expanded(
-            child: filtered.isEmpty
-                ? const _EmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) => _SessionTile(session: filtered[i]),
-                  ),
+            child: sessionState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filtered.isEmpty
+                    ? const _EmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: filtered.length,
+                        itemBuilder: (_, i) => _SessionTile(session: filtered[i]),
+                      ),
           ),
         ],
       ),

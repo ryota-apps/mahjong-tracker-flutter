@@ -225,7 +225,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     await _clearDraft();
 
     if (!mounted) return;
-    final sessions   = ref.read(sessionProvider);
+    final sessions   = ref.read(sessionProvider).sessions;
     final todayTotal = todayNetTotal(sessions);
     Navigator.of(context).pop();
     showToast(context, '保存しました　今日: ${signedYen(todayTotal)}');

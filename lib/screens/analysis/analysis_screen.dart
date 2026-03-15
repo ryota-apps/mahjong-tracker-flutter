@@ -17,9 +17,10 @@ class AnalysisScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final all    = ref.watch(sessionProvider);
-    final filter = ref.watch(filterProvider);
-    final data   = applyFilter(all, filter, filter.withFees);
+    final sessionState = ref.watch(sessionProvider);
+    final filter       = ref.watch(filterProvider);
+    final all          = sessionState.sessions;
+    final data         = applyFilter(all, filter, filter.withFees);
     // 分析は古い順に並べ直す
     final sorted = [...data]..sort((a, b) => a.date.compareTo(b.date));
 
@@ -29,7 +30,9 @@ class AnalysisScreen extends ConsumerWidget {
         children: [
           _FilterBar(sessions: all),
           Expanded(
-            child: data.isEmpty
+            child: sessionState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : data.isEmpty
                 ? const _EmptyState()
                 : ListView(
                     padding: const EdgeInsets.all(16),

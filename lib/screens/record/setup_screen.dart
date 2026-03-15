@@ -190,8 +190,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     final shops    = ref.watch(shopProvider);
-    final sessions = ref.watch(sessionProvider);
-    final todayNet = todayNetTotal(sessions);
+    final sessionState = ref.watch(sessionProvider);
+    final sessions     = sessionState.sessions;
+    final todayNet     = todayNetTotal(sessions);
 
     return Scaffold(
       appBar: AppBar(title: const Text('記録する')),

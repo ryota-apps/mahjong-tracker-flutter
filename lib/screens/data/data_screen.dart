@@ -65,7 +65,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
 
   // ── JSON エクスポート ──────────────────────────────────────────────────────
   Future<void> _exportJson() async {
-    final sessions = ref.read(sessionProvider);
+    final sessions = ref.read(sessionProvider).sessions;
     final shops    = ref.read(shopProvider);
     final json = jsonEncode({
       'sessions': sessions.map((s) => s.toMap()).toList(),
@@ -85,7 +85,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
 
   // ── CSV エクスポート ──────────────────────────────────────────────────────
   Future<void> _exportCsv() async {
-    final sessions = ref.read(sessionProvider);
+    final sessions = ref.read(sessionProvider).sessions;
 
     const header = '\uFEFF'  // BOM
         '日付,店舗名,人数,戦型,種別,レート,'
@@ -132,7 +132,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
       final raw  = await File(result.files.single.path!).readAsString();
       final data = jsonDecode(raw) as Map<String, dynamic>;
 
-      final existingSessions = ref.read(sessionProvider);
+      final existingSessions = ref.read(sessionProvider).sessions;
       final existingShops    = ref.read(shopProvider);
 
       final existingSessionIds = existingSessions.map((s) => s.id).toSet();
@@ -182,7 +182,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
   Future<void> _icloudBackup() async {
     setState(() => _syncing = true);
     try {
-      final sessions = ref.read(sessionProvider);
+      final sessions = ref.read(sessionProvider).sessions;
       final shops    = ref.read(shopProvider);
       final json = jsonEncode({
         'sessions': sessions.map((s) => s.toMap()).toList(),
@@ -243,7 +243,7 @@ class _DataScreenState extends ConsumerState<DataScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sessions = ref.watch(sessionProvider);
+    final sessions = ref.watch(sessionProvider).sessions;
 
     return Scaffold(
       appBar: AppBar(title: const Text('データ')),
