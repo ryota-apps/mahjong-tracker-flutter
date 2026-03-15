@@ -8,6 +8,7 @@ import '../../app.dart';
 import '../../models/shop.dart';
 import '../../providers/shop_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/info_badge.dart';
 
 const _formatOptions = ['東南戦', '東風戦', 'その他'];
 const _rateOptions   = [0, 1, 2, 3, 5, 10, 20, 30, 50];
@@ -202,18 +203,18 @@ class _ShopCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 4,
             children: [
-              _Badge(label: '${shop.players}人',   color: AppColors.appInk.withAlpha(15), textColor: AppColors.appInk),
-              _Badge(label: shop.format,            color: AppColors.appInk.withAlpha(15), textColor: AppColors.appInk),
+              InfoBadge(text: '${shop.players}人',   color: AppColors.appInk),
+              InfoBadge(text: shop.format,            color: AppColors.appInk),
               if (shop.rule > 0)
-                _Badge(label: '${shop.rule}pt',    color: AppColors.appInk.withAlpha(15), textColor: AppColors.appInk),
+                InfoBadge(text: '${shop.rule}pt',    color: AppColors.appInk),
               if (shop.chipUnit > 0)
-                _Badge(label: 'チップ${formatYen(shop.chipUnit)}', color: AppColors.appGold.withAlpha(30), textColor: AppColors.appGold),
+                InfoBadge(text: 'チップ${formatYen(shop.chipUnit)}', color: AppColors.appGold),
               if (shop.gameFee > 0)
-                _Badge(label: 'ゲーム代${formatYen(shop.gameFee)}',  color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
+                InfoBadge(text: 'ゲーム代${formatYen(shop.gameFee)}',  color: AppColors.appTeal),
               if (shop.topPrize > 0)
-                _Badge(label: 'トップ賞${formatYen(shop.topPrize)}', color: AppColors.appTeal.withAlpha(20), textColor: AppColors.appTeal),
+                InfoBadge(text: 'トップ賞${formatYen(shop.topPrize)}', color: AppColors.appTeal),
               if (shop.chipNote.isNotEmpty)
-                _Badge(label: shop.chipNote, color: AppColors.appInk.withAlpha(10), textColor: AppColors.appInk.withAlpha(180)),
+                InfoBadge(text: shop.chipNote, color: AppColors.appInk),
             ],
           ),
         ],
@@ -538,19 +539,3 @@ class _NumInput extends StatelessWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color  color;
-  final Color  textColor;
-  const _Badge({required this.label, required this.color, required this.textColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color, borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: TextStyle(fontSize: 11, color: textColor)),
-    );
-  }
-}

@@ -12,6 +12,7 @@ import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
 import '../../widgets/filter_chip_bar.dart';
+import '../../widgets/info_badge.dart';
 import '../../widgets/toast_widget.dart';
 
 // ─── レート・ソートラベル ─────────────────────────────────────────────────────
@@ -387,12 +388,9 @@ class _SessionCard extends StatelessWidget {
                     Wrap(
                       spacing: 4,
                       children: [
-                        _Badge(
-                          label: isFree ? 'フリー' : 'セット',
-                          color: isFree
-                              ? AppColors.appTeal.withAlpha(30)
-                              : AppColors.appGold.withAlpha(30),
-                          textColor: isFree ? AppColors.appTeal : AppColors.appGold,
+                        InfoBadge(
+                          text:  isFree ? 'フリー' : 'セット',
+                          color: isFree ? AppColors.appTeal : AppColors.appGold,
                         ),
                       ],
                     ),
@@ -453,22 +451,19 @@ class _SessionCard extends StatelessWidget {
             runSpacing: 4,
             children: [
               if (session.chipVal != 0)
-                _Badge(
-                  label: 'チップ${signedCommaStr(session.chipVal)}',
-                  color: AppColors.appGold.withAlpha(30),
-                  textColor: AppColors.appGold,
+                InfoBadge(
+                  text:  'チップ${signedCommaStr(session.chipVal)}',
+                  color: AppColors.appGold,
                 ),
               if (session.venueFee != 0)
-                _Badge(
-                  label: '場代 ${formatYen(session.venueFee)}',
-                  color: AppColors.appRed.withAlpha(20),
-                  textColor: AppColors.appRed,
+                InfoBadge(
+                  text:  '場代 ${formatYen(session.venueFee)}',
+                  color: AppColors.appRed,
                 ),
               if (session.note.isNotEmpty)
-                _Badge(
-                  label: session.note,
-                  color: AppColors.appInk.withAlpha(10),
-                  textColor: AppColors.appInk.withAlpha(180),
+                InfoBadge(
+                  text:  session.note,
+                  color: AppColors.appInk,
                 ),
             ],
           ),
@@ -833,26 +828,6 @@ class _EditRow extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ── ユーティリティ ──────────────────────────────────────────────────────────
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color  color;
-  final Color  textColor;
-  const _Badge({required this.label, required this.color, required this.textColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color:        color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(label, style: TextStyle(fontSize: 11, color: textColor)),
     );
   }
 }

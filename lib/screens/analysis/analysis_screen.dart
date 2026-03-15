@@ -11,6 +11,7 @@ import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
 import '../../widgets/filter_chip_bar.dart';
+import '../../widgets/info_badge.dart';
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({super.key});
@@ -581,16 +582,16 @@ class _ShopStats extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    _StatPill(label: '${ss.length}回'),
-                    _StatPill(label: '$games局'),
-                    _StatPill(label: '1着率${p1Rate.toStringAsFixed(0)}%'),
-                    _StatPill(
-                      label: signedCommaStr(net),
+                    InfoBadge(text: '${ss.length}回',  color: AppColors.appInk),
+                    InfoBadge(text: '$games局',       color: AppColors.appInk),
+                    InfoBadge(text: '1着率${p1Rate.toStringAsFixed(0)}%', color: AppColors.appInk),
+                    InfoBadge(
+                      text:  signedCommaStr(net),
                       color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
                     ),
                     if (chip != 0)
-                      _StatPill(
-                        label: 'チップ${signedCommaStr(chip)}',
+                      InfoBadge(
+                        text:  'チップ${signedCommaStr(chip)}',
                         color: AppColors.appGold,
                       ),
                   ],
@@ -662,29 +663,6 @@ class _StatBox extends StatelessWidget {
           Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
-    );
-  }
-}
-
-class _StatPill extends StatelessWidget {
-  final String label;
-  final Color? color;
-  const _StatPill({required this.label, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: (color ?? AppColors.appInk).withAlpha(15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11,
-              color: color ?? AppColors.appInk,
-              fontWeight: FontWeight.w500)),
     );
   }
 }
