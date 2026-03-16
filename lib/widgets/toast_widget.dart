@@ -96,9 +96,11 @@ class _ToastOverlayState extends State<_ToastOverlay>
               child: Text(
                 widget.message,
                 style: const TextStyle(
-                  color:      Colors.white,
-                  fontSize:   14,
-                  fontWeight: FontWeight.w500,
+                  color:           Colors.white,
+                  fontSize:        14,
+                  fontWeight:      FontWeight.w500,
+                  decoration:      TextDecoration.none,
+                  decorationColor: Colors.transparent,
                 ),
                 textAlign: TextAlign.center,
                 maxLines:  2,

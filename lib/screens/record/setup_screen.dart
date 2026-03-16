@@ -16,15 +16,6 @@ const _rateOptions   = [0, 1, 2, 3, 5, 10, 20, 30, 50];
 const _formatOptions = ['東南戦', '東風戦', 'その他'];
 
 // ─── SharedPreferences キー ──────────────────────────────────────────────────
-const _kDate       = 'setup_date';
-const _kGameType   = 'setup_gameType';
-const _kShopName   = 'setup_shopName';
-const _kRule       = 'setup_rule';
-const _kPlayers    = 'setup_players';
-const _kFormat     = 'setup_format';
-const _kChipUnit   = 'setup_chipUnit';
-const _kGameFee    = 'setup_gameFee';
-const _kTopPrize   = 'setup_topPrize';
 const _kDraft      = 'session_draft';
 
 // SegmentedButton 共通スタイル（AppInk ベース）
@@ -68,38 +59,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     super.dispose();
   }
 
-  // ── 前回設定を復元 ─────────────────────────────────────────────────────────
-  Future<void> _restoreLast() async {
-    final p = await SharedPreferences.getInstance();
-    setState(() {
-      final dateStr = p.getString(_kDate);
-      if (dateStr != null) _date = DateTime.tryParse(dateStr) ?? _date;
-      _gameType = p.getString(_kGameType) ?? _gameType;
-      _shopName = p.getString(_kShopName) ?? _shopName;
-      _rule     = p.getInt(_kRule)       ?? _rule;
-      _players  = p.getInt(_kPlayers)   ?? _players;
-      _format   = p.getString(_kFormat) ?? _format;
-      _chipUnit = p.getInt(_kChipUnit)  ?? _chipUnit;
-      _gameFee  = p.getInt(_kGameFee)   ?? _gameFee;
-      _topPrize = p.getInt(_kTopPrize)  ?? _topPrize;
-      _shopCtrl.text = _shopName;
-    });
-  }
-
-  // ── 今回の設定を保存 ───────────────────────────────────────────────────────
-  Future<void> _saveLast() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString(_kDate,     _date.toIso8601String());
-    await p.setString(_kGameType, _gameType);
-    await p.setString(_kShopName, _shopName);
-    await p.setInt(   _kRule,     _rule);
-    await p.setInt(   _kPlayers,  _players);
-    await p.setString(_kFormat,   _format);
-    await p.setInt(   _kChipUnit, _chipUnit);
-    await p.setInt(   _kGameFee,  _gameFee);
-    await p.setInt(   _kTopPrize, _topPrize);
-  }
-
   // ── プリセット適用 ─────────────────────────────────────────────────────────
   void _applyPreset(Shop? shop) {
     setState(() {
@@ -119,12 +78,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   // ── セッション開始（ドラフトチェック付き）──────────────────────────────────
   Future<void> _startSession() async {
     _shopName = _shopCtrl.text.trim();
-    if (_shopName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('店舗名を入力してください')),
-      );
-      return;
-    }
 
     final p        = await SharedPreferences.getInstance();
     final draftStr = p.getString(_kDraft);
@@ -157,8 +110,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     }
 
     if (!mounted) return;
-    await _saveLast();
-    if (!mounted) return;
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SessionInputScreen(
         date:     _date,
@@ -190,7 +141,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Widget build(BuildContext context) {
     final shops = ref.watch(shopProvider);
 
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
       appBar: AppBar(title: const Text('記録する')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -272,7 +226,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
                   // ── 店舗名 ─────────────────────────────────────────────
                   _SectionCard(
-                    label: '店舗名',
+                    label: '店舗名（任意）',
                     child: TextField(
                       controller: _shopCtrl,
                       decoration: const InputDecoration(
@@ -355,25 +309,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       style: TextStyle(
                           fontSize: 16, color: AppColors.appPaper)),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: () async {
-                    await _restoreLast();
-                    await _startSession();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(
-                        color: AppColors.appTeal, width: 1.5),
-                    foregroundColor: AppColors.appTeal,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('前回と同じ設定で開始',
-                      style: TextStyle(fontSize: 16)),
-                ),
               ],
             ),
           ),
         ],
+      ),
       ),
     );
   }

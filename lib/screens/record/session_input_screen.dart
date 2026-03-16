@@ -273,13 +273,16 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.shopName,
+              Text(widget.shopName.isEmpty ? '店舗未設定' : widget.shopName,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text(
                 '${DateFormat('M/d').format(widget.date)}  ${widget.players}人  ${widget.format}  ${isFree ? "フリー" : "セット"}',
@@ -330,6 +333,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

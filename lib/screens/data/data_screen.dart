@@ -4,11 +4,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icloud_storage/icloud_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
 import '../../constants/game_type.dart';
@@ -19,10 +17,6 @@ import '../../providers/session_provider.dart';
 import '../../providers/shop_provider.dart';
 import '../../widgets/toast_widget.dart';
 
-const _kICloudEnabled    = 'icloud_enabled';
-const _kICloudLastSync   = 'icloud_last_sync';
-const _iCloudContainerId = 'iCloud.com.ryota.mahjongtracker';
-
 class DataScreen extends ConsumerStatefulWidget {
   const DataScreen({super.key});
 
@@ -31,39 +25,6 @@ class DataScreen extends ConsumerStatefulWidget {
 }
 
 class _DataScreenState extends ConsumerState<DataScreen> {
-  bool _icloudEnabled = false;
-  String? _lastSyncStr;
-  bool _syncing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPrefsAndAutoSync();
-  }
-
-  Future<void> _loadPrefsAndAutoSync() async {
-    final p = await SharedPreferences.getInstance();
-    final enabled = p.getBool(_kICloudEnabled) ?? false;
-    setState(() {
-      _icloudEnabled = enabled;
-      _lastSyncStr   = p.getString(_kICloudLastSync);
-    });
-    // 起動時：ONなら自動同期
-    if (enabled) {
-      await _icloudBackup();
-    }
-  }
-
-  Future<void> _toggleICloud(bool enabled) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setBool(_kICloudEnabled, enabled);
-    setState(() => _icloudEnabled = enabled);
-    // トグルONにした瞬間に自動同期
-    if (enabled) {
-      await _icloudBackup();
-    }
-  }
-
   // ── JSON エクスポート ──────────────────────────────────────────────────────
   Future<void> _exportJson() async {
     final sessions = ref.read(sessionProvider).sessions;
@@ -179,43 +140,6 @@ class _DataScreenState extends ConsumerState<DataScreen> {
     }
   }
 
-  // ── iCloud バックアップ ────────────────────────────────────────────────────
-  Future<void> _icloudBackup() async {
-    setState(() => _syncing = true);
-    try {
-      final sessions = ref.read(sessionProvider).sessions;
-      final shops    = ref.read(shopProvider);
-      final json = jsonEncode({
-        'sessions': sessions.map((s) => s.toMap()).toList(),
-        'shops':    shops.map((s)    => s.toMap()).toList(),
-      });
-
-      final dir  = await getTemporaryDirectory();
-      final file = File('${dir.path}/mahjong_backup.json');
-      await file.writeAsString(json, encoding: utf8);
-
-      await ICloudStorage.upload(
-        containerId: _iCloudContainerId,
-        filePath:    file.path,
-        destinationRelativePath: '麻雀成績集計/mahjong_backup.json',
-        onProgress: (_) {},
-      );
-
-      final now = DateTime.now();
-      final p   = await SharedPreferences.getInstance();
-      await p.setString(
-          _kICloudLastSync, DateFormat('yyyy/MM/dd HH:mm').format(now));
-      setState(() => _lastSyncStr =
-          DateFormat('yyyy/MM/dd HH:mm').format(now));
-
-      if (mounted) showToast(context, 'iCloudにバックアップしました');
-    } catch (e) {
-      if (mounted) showToast(context, 'iCloud同期に失敗しました: $e');
-    } finally {
-      setState(() => _syncing = false);
-    }
-  }
-
   // ── 全削除 ────────────────────────────────────────────────────────────────
   Future<void> _deleteAll() async {
     final ok = await showDialog<bool>(
@@ -251,42 +175,6 @@ class _DataScreenState extends ConsumerState<DataScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ── iCloud同期 ──────────────────────────────────────────────────
-          _Section(
-            title: 'iCloud同期',
-            children: [
-              _TileRow(
-                label: 'iCloudバックアップ',
-                trailing: Switch(
-                  value:    _icloudEnabled,
-                  onChanged: _toggleICloud,
-                  activeThumbColor: AppColors.appTeal,
-                ),
-              ),
-              _TileRow(
-                label: '最終同期',
-                trailing: _syncing
-                    ? const SizedBox(
-                        width: 14, height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(
-                        _lastSyncStr ?? '未同期',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.appInk.withAlpha(160))),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 4, left: 2),
-                child: Text(
-                  'ONにした瞬間・アプリ起動時に自動でバックアップします',
-                  style: TextStyle(
-                      fontSize: 11, color: AppColors.appInk.withAlpha(120)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
           // ── エクスポート ─────────────────────────────────────────────────
           _Section(
             title: 'エクスポート',

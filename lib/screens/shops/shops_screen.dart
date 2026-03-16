@@ -20,32 +20,27 @@ class ShopsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shops = ref.watch(shopProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('店舗設定')),
-      body: shops.isEmpty
-          ? _EmptyState(onAdd: () => _openForm(context))
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: shops.length,
-                    itemBuilder: (_, i) =>
-                        _ShopTile(shop: shops[i]),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('店舗設定')),
+        body: shops.isEmpty
+            ? _EmptyState(onAdd: () => _openForm(context))
+            : Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: shops.length,
+                      itemBuilder: (_, i) =>
+                          _ShopTile(shop: shops[i]),
+                    ),
                   ),
-                ),
-                _AddButton(onTap: () => _openForm(context)),
-              ],
-            ),
-      floatingActionButton: shops.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _openForm(context),
-              backgroundColor: AppColors.appInk,
-              foregroundColor: AppColors.appPaper,
-              icon: const Icon(Icons.add),
-              label: const Text('新しい店舗を追加'),
-            ),
+                  _AddButton(onTap: () => _openForm(context)),
+                ],
+              ),
+      ),
     );
   }
 

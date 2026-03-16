@@ -315,18 +315,7 @@ class _SessionTile extends ConsumerWidget {
   }
 
   void _delete(BuildContext context, WidgetRef ref) {
-    final deleted = session;
     ref.read(sessionProvider.notifier).deleteSession(session.id);
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: const Text('セッションを削除しました'),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: '元に戻す',
-          onPressed: () => ref.read(sessionProvider.notifier).addSession(deleted),
-        ),
-      ));
   }
 }
 
@@ -369,7 +358,7 @@ class _SessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(session.shop,
+                    Text(session.shop.isEmpty ? '店舗未設定' : session.shop,
                         style: GoogleFonts.notoSerif(
                           fontWeight: FontWeight.bold,
                           fontSize: 17,
@@ -593,7 +582,10 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
       padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -838,6 +830,7 @@ class _EditSheetState extends ConsumerState<_EditSheet> {
           ],
         ),
       ),
+    ),
     );
   }
 }
