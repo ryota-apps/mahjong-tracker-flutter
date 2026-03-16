@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../services/ad_service.dart';
 
-const _bannerUnitId = 'ca-app-pub-5309859983306685/2270151367';
+final _bannerUnitId = Platform.isIOS
+    ? 'ca-app-pub-5309859983306685/2270151367'
+    : 'ca-app-pub-5309859983306685/8594918964';
 
 class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({super.key});

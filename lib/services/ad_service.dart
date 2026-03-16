@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-const _interstitialUnitId = 'ca-app-pub-5309859983306685/9639208215';
+final _interstitialUnitId = Platform.isIOS
+    ? 'ca-app-pub-5309859983306685/9639208215'
+    : 'ca-app-pub-5309859983306685/2530874384';
 
 class AdService {
   AdService._();
