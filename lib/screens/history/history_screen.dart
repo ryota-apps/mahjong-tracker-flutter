@@ -12,6 +12,7 @@ import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/filter_chip_bar.dart';
 import '../../widgets/info_badge.dart';
 import '../../widgets/toast_widget.dart';
@@ -52,6 +53,7 @@ class HistoryScreen extends ConsumerWidget {
                         itemBuilder: (_, i) => _SessionTile(session: filtered[i]),
                       ),
           ),
+          const Center(child: BannerAdWidget()),
         ],
       ),
     );

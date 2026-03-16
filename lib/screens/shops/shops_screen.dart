@@ -8,6 +8,7 @@ import '../../app.dart';
 import '../../models/shop.dart';
 import '../../providers/shop_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/info_badge.dart';
 
 const _formatOptions = ['東南戦', '東風戦', 'その他'];
@@ -26,7 +27,12 @@ class ShopsScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(title: const Text('店舗設定')),
         body: shops.isEmpty
-            ? _EmptyState(onAdd: () => _openForm(context))
+            ? Column(
+                children: [
+                  Expanded(child: _EmptyState(onAdd: () => _openForm(context))),
+                  const Center(child: BannerAdWidget()),
+                ],
+              )
             : Column(
                 children: [
                   Expanded(
@@ -38,6 +44,7 @@ class ShopsScreen extends ConsumerWidget {
                     ),
                   ),
                   _AddButton(onTap: () => _openForm(context)),
+                  const Center(child: BannerAdWidget()),
                 ],
               ),
       ),

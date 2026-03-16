@@ -24,6 +24,9 @@ dependencies:
   # グラフ
   fl_chart: ^0.68.0
 
+  # 広告
+  google_mobile_ads: ^7.0.0
+
   # ファイル操作（CSV/JSONエクスポート）
   share_plus: ^9.0.0
   file_picker: ^8.0.0

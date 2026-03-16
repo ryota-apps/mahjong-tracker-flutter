@@ -11,6 +11,7 @@ import '../../models/session.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/session_provider.dart';
 import '../../utils/session_utils.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/filter_chip_bar.dart';
 import '../../widgets/info_badge.dart';
 
@@ -54,6 +55,7 @@ class AnalysisScreen extends ConsumerWidget {
                     ],
                   ),
           ),
+          const Center(child: BannerAdWidget()),
         ],
       ),
     );

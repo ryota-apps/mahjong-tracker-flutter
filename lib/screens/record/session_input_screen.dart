@@ -11,6 +11,7 @@ import '../../app.dart';
 import '../../constants/game_type.dart';
 import '../../models/session.dart';
 import '../../providers/session_provider.dart';
+import '../../services/ad_service.dart';
 import '../../utils/session_utils.dart';
 import '../../widgets/toast_widget.dart';
 
@@ -234,6 +235,7 @@ class _SessionInputScreenState extends ConsumerState<SessionInputScreen> {
     final todayTotal = todayNetTotal(sessions);
     Navigator.of(context).pop();
     showToast(context, '保存しました　今日: ${signedYen(todayTotal)}');
+    AdService.instance.showInterstitialIfReady();
   }
 
   // ── 破棄確認 ──────────────────────────────────────────────────────────────

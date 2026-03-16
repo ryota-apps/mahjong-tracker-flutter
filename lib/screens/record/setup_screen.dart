@@ -9,6 +9,7 @@ import '../../app.dart';
 import '../../constants/game_type.dart';
 import '../../models/shop.dart';
 import '../../providers/shop_provider.dart';
+import '../../widgets/banner_ad_widget.dart';
 import 'session_input_screen.dart';
 
 // ─── レートの選択肢 ─────────────────────────────────────────────────────────
@@ -312,6 +313,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               ],
             ),
           ),
+          const Center(child: BannerAdWidget()),
         ],
       ),
       ),

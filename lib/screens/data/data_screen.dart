@@ -15,6 +15,7 @@ import '../../models/session.dart';
 import '../../models/shop.dart';
 import '../../providers/session_provider.dart';
 import '../../providers/shop_provider.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/toast_widget.dart';
 
 class DataScreen extends ConsumerStatefulWidget {
@@ -172,7 +173,9 @@ class _DataScreenState extends ConsumerState<DataScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('データ')),
-      body: ListView(
+      body: Column(
+        children: [
+          Expanded(child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // ── エクスポート ─────────────────────────────────────────────────
@@ -234,6 +237,9 @@ class _DataScreenState extends ConsumerState<DataScreen> {
             ],
           ),
           const SizedBox(height: 32),
+        ],
+      )),
+          const Center(child: BannerAdWidget()),
         ],
       ),
     );

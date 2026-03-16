@@ -8,10 +8,12 @@ import 'screens/history/history_screen.dart';
 import 'screens/analysis/analysis_screen.dart';
 import 'screens/shops/shops_screen.dart';
 import 'screens/data/data_screen.dart';
+import 'services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ja_JP', null);
+  await AdService.instance.initialize();
   runApp(const ProviderScope(child: MyApp()));
 }
 
