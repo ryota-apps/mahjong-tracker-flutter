@@ -20,7 +20,7 @@ class FilterChipBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(children: children),
     );
   }
@@ -45,7 +45,7 @@ class AppFilterChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.appInk : AppColors.appCream,
           borderRadius: BorderRadius.circular(20),
@@ -56,7 +56,7 @@ class AppFilterChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize:   12,
+            fontSize:   13,
             color:      selected ? AppColors.appPaper : AppColors.appInk,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
           ),

@@ -38,8 +38,6 @@ class HistoryScreen extends ConsumerWidget {
         children: [
           // フィルターバー
           _FilterBar(sessions: sessions),
-          // サマリーバー
-          if (filtered.isNotEmpty) _SummaryBar(sessions: filtered, withFees: filter.withFees),
           // リスト
           Expanded(
             child: sessionState.isLoading
@@ -126,111 +124,6 @@ class _FilterBar extends ConsumerWidget {
           onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
         ),
       ],
-    );
-  }
-}
-
-// ── サマリーバー ──────────────────────────────────────────────────────────
-class _SummaryBar extends StatelessWidget {
-  final List<Session> sessions;
-  final bool withFees;
-  const _SummaryBar({required this.sessions, required this.withFees});
-
-  @override
-  Widget build(BuildContext context) {
-    final total = sessions.fold(0, (s, e) => s + getNet(e, withFees));
-    final totalGames = sessions.fold(0, (s, e) => s + e.totalGames);
-    final avgNet  = sessions.isEmpty ? 0 : (total / sessions.length).round();
-    final counts  = [
-      sessions.fold(0, (s, e) => s + e.count1),
-      sessions.fold(0, (s, e) => s + e.count2),
-      sessions.fold(0, (s, e) => s + e.count3),
-      sessions.fold(0, (s, e) => s + e.count4),
-    ];
-    final avgPlace = totalGames == 0
-        ? 0.0
-        : sessions.fold(
-                0.0,
-                (s, e) =>
-                    s +
-                    (e.count1 * 1.0 +
-                        e.count2 * 2.0 +
-                        e.count3 * 3.0 +
-                        e.count4 * 4.0)) /
-            totalGames;
-    final placeColors = [
-      AppColors.place1, AppColors.place2, AppColors.place3, AppColors.place4
-    ];
-
-    return Container(
-      color: AppColors.appCream,
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            _SumItem(label: 'セッション', value: '${sessions.length}回'),
-            _SumItem(label: '総ゲーム',   value: '$totalGames局'),
-            _SumItem(label: '平均着順',   value: avgPlace.toStringAsFixed(2)),
-            // 着順内訳
-            Row(
-              children: List.generate(counts.length, (i) => Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                          color: placeColors[i], shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 3),
-                    Text('${counts[i]}',
-                        style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-              )),
-            ),
-            _SumItem(
-              label: '収支合計',
-              value: signedYen(total),
-              valueColor: total >= 0 ? AppColors.appTeal : AppColors.appRed,
-            ),
-            _SumItem(
-              label: '平均収支',
-              value: signedYen(avgNet),
-              valueColor: avgNet >= 0 ? AppColors.appTeal : AppColors.appRed,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SumItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _SumItem({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10, color: AppColors.appInk.withAlpha(128))),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: valueColor ?? AppColors.appInk)),
-        ],
-      ),
     );
   }
 }
