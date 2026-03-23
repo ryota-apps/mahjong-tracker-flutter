@@ -577,7 +577,7 @@ class _ShopStats extends StatelessWidget {
               : ss.fold(0.0, (s, e) => s + e.count1 * 1.0 + e.count2 * 2.0 + e.count3 * 3.0 + e.count4 * 4.0) / games;
 
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -587,8 +587,10 @@ class _ShopStats extends StatelessWidget {
                       fontSize: 14,
                       color: AppColors.appInk,
                     )),
-                const SizedBox(height: 4),
-                Row(
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
                     InfoBadge(text: '${ss.length}回',  color: AppColors.appInk),
                     InfoBadge(text: '$games局',       color: AppColors.appInk),
@@ -604,6 +606,12 @@ class _ShopStats extends StatelessWidget {
                       ),
                   ],
                 ),
+                if (name != shopNames.last)
+                  Divider(
+                    color: AppColors.appInk.withAlpha(15),
+                    height: 1,
+                    thickness: 1,
+                  ),
               ],
             ),
           );
