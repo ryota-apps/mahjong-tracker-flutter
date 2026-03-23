@@ -21,7 +21,6 @@ import '../../widgets/toast_widget.dart';
 const _periodLabels   = ['全期間', '今月', '先月', '直近3ヶ月'];
 const _playersLabels  = ['全人数', '3人', '4人'];
 const _typeLabels     = ['全種別', 'フリー', 'セット'];
-const _sortLabels     = ['新しい順', '古い順', '収支高い順', '収支低い順'];
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -126,13 +125,6 @@ class _FilterBar extends ConsumerWidget {
           selected: !f.withFees,
           onTap: () => ntf.update((s) => s.copyWith(withFees: !f.withFees)),
         ),
-        const FilterBarDivider(),
-        // ソート
-        ..._sortLabels.asMap().entries.map((e) => AppFilterChip(
-          label:    e.value,
-          selected: f.sortOrder.index == e.key,
-          onTap: () => ntf.update((s) => s.copyWith(sortOrder: SortOrder.values[e.key])),
-        )),
       ],
     );
   }
