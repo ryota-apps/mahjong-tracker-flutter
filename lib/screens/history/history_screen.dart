@@ -75,18 +75,18 @@ class _FilterBar extends ConsumerWidget {
 
     return FilterChipBar(
       children: [
-        // 期間
-        ..._periodLabels.asMap().entries.map((e) => AppFilterChip(
-          label:    e.value,
-          selected: f.period.index == e.key,
-          onTap: () => ntf.update((s) => s.copyWith(period: PeriodFilter.values[e.key])),
-        )),
-        const FilterBarDivider(),
         // 人数
         ..._playersLabels.asMap().entries.map((e) => AppFilterChip(
           label:    e.value,
           selected: f.players.index == e.key,
           onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.values[e.key])),
+        )),
+        const FilterBarDivider(),
+        // 期間
+        ..._periodLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.period.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(period: PeriodFilter.values[e.key])),
         )),
         const FilterBarDivider(),
         // 種別

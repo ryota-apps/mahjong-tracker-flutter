@@ -75,13 +75,6 @@ class _FilterBar extends ConsumerWidget {
 
     return FilterChipBar(
       children: [
-        ...periodLabels.asMap().entries.map((e) => AppFilterChip(
-          label:    e.value,
-          selected: f.period.index == e.key,
-          onTap: () => ntf.update((s) => s.copyWith(
-              period: PeriodFilter.values[e.key])),
-        )),
-        const FilterBarDivider(),
         AppFilterChip(
           label: '全人数', selected: f.players == PlayersFilter.all,
           onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.all)),
@@ -94,6 +87,13 @@ class _FilterBar extends ConsumerWidget {
           label: '4人', selected: f.players == PlayersFilter.four,
           onTap: () => ntf.update((s) => s.copyWith(players: PlayersFilter.four)),
         ),
+        const FilterBarDivider(),
+        ...periodLabels.asMap().entries.map((e) => AppFilterChip(
+          label:    e.value,
+          selected: f.period.index == e.key,
+          onTap: () => ntf.update((s) => s.copyWith(
+              period: PeriodFilter.values[e.key])),
+        )),
         const FilterBarDivider(),
         AppFilterChip(
           label: 'ゲーム代差引', selected: !f.withFees,
@@ -516,31 +516,36 @@ class _DistRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 12, color: AppColors.appInk.withAlpha(128))),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Row(
-            children: List.generate(counts.length, (i) {
-              final pct = total == 0 ? 0.0 : counts[i] / total;
-              return Flexible(
-                flex: (pct * 1000).round(),
-                child: Container(
-                  height: 18,
-                  color: _colors[i],
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Row(
           children: List.generate(counts.length, (i) {
             final pct = total == 0 ? 0.0 : counts[i] / total * 100;
             return Expanded(
-              child: Text(
-                '${counts[i]}(${pct.toStringAsFixed(0)}%)',
-                style: const TextStyle(fontSize: 10),
-                textAlign: TextAlign.center,
+              child: Container(
+                margin: EdgeInsets.only(right: i < counts.length - 1 ? 8 : 0),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: _colors[i].withAlpha(30),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _colors[i].withAlpha(80), width: 1),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${i + 1}着',
+                      style: TextStyle(fontSize: 11, color: _colors[i], fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${counts[i]}回',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _colors[i]),
+                    ),
+                    Text(
+                      '${pct.toStringAsFixed(0)}%',
+                      style: TextStyle(fontSize: 11, color: _colors[i].withAlpha(180)),
+                    ),
+                  ],
+                ),
               ),
             );
           }),
@@ -568,8 +573,8 @@ class _ShopStats extends StatelessWidget {
           final games = ss.fold(0, (sum, s) => sum + s.totalGames);
           final net   = ss.fold(0, (sum, s) => sum + getNet(s, withFees));
           final chip  = ss.fold(0, (sum, s) => sum + s.chipVal);
-          final p1Rate= games == 0 ? 0.0
-              : ss.fold(0, (s, e) => s + e.count1) / games * 100;
+          final avgRank = games == 0 ? 0.0
+              : ss.fold(0.0, (s, e) => s + e.count1 * 1.0 + e.count2 * 2.0 + e.count3 * 3.0 + e.count4 * 4.0) / games;
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -587,7 +592,7 @@ class _ShopStats extends StatelessWidget {
                   children: [
                     InfoBadge(text: '${ss.length}回',  color: AppColors.appInk),
                     InfoBadge(text: '$games局',       color: AppColors.appInk),
-                    InfoBadge(text: '1着率${p1Rate.toStringAsFixed(0)}%', color: AppColors.appInk),
+                    InfoBadge(text: '平均${avgRank.toStringAsFixed(2)}着', color: AppColors.appInk),
                     InfoBadge(
                       text:  signedCommaStr(net),
                       color: net >= 0 ? AppColors.appTeal : AppColors.appRed,
