@@ -14,7 +14,6 @@ class AdService {
   bool isPremium = false;
 
   InterstitialAd? _interstitial;
-  int _sessionsSinceLastAd = 0;
 
   Future<void> initialize() async {
     await MobileAds.instance.initialize();
@@ -49,12 +48,9 @@ class AdService {
     );
   }
 
-  /// セッション保存後に呼ぶ。3回に1回表示。
+  /// セッション保存後に呼ぶ。毎回表示。
   void showInterstitialIfReady() {
     if (isPremium) return;
-    _sessionsSinceLastAd++;
-    if (_sessionsSinceLastAd < 3) return;
-    _sessionsSinceLastAd = 0;
     if (_interstitial == null) return;
     _interstitial!.show();
   }
